@@ -58,6 +58,8 @@ function showPage(pageName) {
             loadPerformance(false);
         } else if (pageName === 'settings') {
             loadSettings();
+        } else if (pageName === 'scan') {
+            loadScanPage();
         }
     }
 }
@@ -72,6 +74,22 @@ async function loadConfig() {
     } catch (error) {
         showToast('Error loading configuration', 'error');
         console.error(error);
+    }
+}
+
+// Load scan page
+async function loadScanPage() {
+    try {
+        // Reload tickers from configuration
+        const response = await fetch('/api/tickers');
+        const data = await response.json();
+
+        if (data.success) {
+            tickers = data.tickers || [];
+            updateTickerChips();
+        }
+    } catch (error) {
+        console.error('Error loading scan page:', error);
     }
 }
 
@@ -463,6 +481,8 @@ async function addTicker() {
         if (data.success) {
             input.value = '';
             displayTickerList(data.tickers);
+            // Update global tickers array so scan page will have latest
+            tickers = data.tickers;
             showToast(`Added ${ticker} to watchlist`, 'success');
         } else {
             showToast(data.error || 'Failed to add ticker', 'error');
@@ -490,6 +510,8 @@ async function removeTickerFromList(ticker) {
 
         if (data.success) {
             displayTickerList(data.tickers);
+            // Update global tickers array so scan page will have latest
+            tickers = data.tickers;
             showToast(`Removed ${ticker} from watchlist`, 'success');
         } else {
             showToast(data.error || 'Failed to remove ticker', 'error');

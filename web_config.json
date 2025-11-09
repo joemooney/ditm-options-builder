@@ -3,7 +3,9 @@
     "AAPL",
     "MSFT",
     "GOOGL",
-    "NVDA"
+    "NVDA",
+    "PLTR",
+    "TSM"
   ],
   "target_capital": 50000,
   "filters": {}
