@@ -188,6 +188,16 @@ function updateTickerChips() {
             </span>
         </div>
     `).join('');
+
+    // Update ticker count in scan page
+    const countElement = document.getElementById('ticker-count-scan');
+    if (countElement) {
+        if (tickers.length > 0) {
+            countElement.textContent = `${tickers.length} ticker${tickers.length !== 1 ? 's' : ''} selected. Add more using Enter, comma, or space.`;
+        } else {
+            countElement.textContent = 'Add tickers using Enter, comma, or space. Manage your watchlist in Settings.';
+        }
+    }
 }
 
 // Remove ticker
