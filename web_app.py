@@ -510,6 +510,21 @@ def api_position_detail(ticker, strike, expiration):
         entry_spread = entry_ask - entry_bid if entry_ask > 0 and entry_bid > 0 else 0
         entry_spread_pct = (entry_spread / entry_mid * 100) if entry_mid > 0 else 0
 
+        # Exercise calculations
+        shares_per_contract = 100
+        total_shares_if_exercised = contracts * shares_per_contract
+        exercise_cost = total_shares_if_exercised * float(strike)
+        current_stock_value_if_exercised = total_shares_if_exercised * current_stock_price
+
+        # Total investment if exercised (original premium + exercise cost)
+        total_investment_if_exercised = total_cost + exercise_cost
+
+        # What you'd get if you exercised and immediately sold shares
+        exercise_and_sell_profit = current_stock_value_if_exercised - exercise_cost - total_cost
+
+        # Compare to just selling the option
+        sell_option_profit = current_value - total_cost if current_value > 0 else -total_cost
+
         return jsonify({
             "success": True,
             "position": pos,
@@ -538,6 +553,15 @@ def api_position_detail(ticker, strike, expiration):
                 "contracts": int(contracts),
                 "intrinsic_value": max(0, current_stock_price - float(strike)),
                 "time_value": max(0, current_option_price - max(0, current_stock_price - float(strike))),
+
+                # Exercise information
+                "exercise_cost": exercise_cost,
+                "total_shares_if_exercised": total_shares_if_exercised,
+                "total_investment_if_exercised": total_investment_if_exercised,
+                "current_stock_value_if_exercised": current_stock_value_if_exercised,
+                "exercise_and_sell_profit": exercise_and_sell_profit,
+                "sell_option_profit": sell_option_profit,
+                "better_to_sell_option": sell_option_profit > exercise_and_sell_profit,
 
                 # Exit strategy
                 "exit_targets": exit_targets,

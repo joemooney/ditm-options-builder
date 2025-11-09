@@ -832,6 +832,69 @@ function displayPositionDetail(position, analysis) {
             </div>
         </div>
 
+        <!-- Exercise Information -->
+        <div class="detail-section">
+            <h4><i class="fas fa-hand-holding-usd"></i> Exercise vs. Sell Analysis</h4>
+
+            <div class="${analysis.better_to_sell_option ? 'info-box' : 'warning-box'}">
+                <p><strong><i class="fas ${analysis.better_to_sell_option ? 'fa-lightbulb' : 'fa-exclamation-triangle'}"></i>
+                Recommendation:</strong> ${analysis.better_to_sell_option ? 'Sell the option (better profit)' : 'Exercise may be preferable (consult advisor)'}</p>
+            </div>
+
+            <div class="detail-grid">
+                <div class="detail-item">
+                    <div class="detail-label">Exercise Cost</div>
+                    <div class="detail-value">${formatCurrency(analysis.exercise_cost)}</div>
+                    <small>${analysis.total_shares_if_exercised} shares × ${formatCurrency(analysis.strike_price)}</small>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">Total If Exercised</div>
+                    <div class="detail-value">${formatCurrency(analysis.total_investment_if_exercised)}</div>
+                    <small>Premium paid + Exercise cost</small>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">Stock Value If Exercised</div>
+                    <div class="detail-value">${formatCurrency(analysis.current_stock_value_if_exercised)}</div>
+                    <small>${analysis.total_shares_if_exercised} shares × ${formatCurrency(analysis.current_stock_price)}</small>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">Shares Received</div>
+                    <div class="detail-value">${analysis.total_shares_if_exercised} shares</div>
+                    <small>${analysis.contracts} contracts × 100</small>
+                </div>
+            </div>
+
+            <div style="margin-top: 1rem; padding: 1rem; background: var(--bg-secondary); border-radius: 8px;">
+                <h5 style="margin: 0 0 0.5rem 0;">Comparison:</h5>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <div>
+                        <strong>Option 1: Sell the Option</strong><br>
+                        <span style="color: ${analysis.sell_option_profit >= 0 ? 'var(--success-color)' : 'var(--danger-color)'};">
+                            Profit: ${formatCurrency(analysis.sell_option_profit)}
+                        </span><br>
+                        <small>No additional capital needed</small>
+                    </div>
+                    <div>
+                        <strong>Option 2: Exercise & Sell Shares</strong><br>
+                        <span style="color: ${analysis.exercise_and_sell_profit >= 0 ? 'var(--success-color)' : 'var(--danger-color)'};">
+                            Profit: ${formatCurrency(analysis.exercise_and_sell_profit)}
+                        </span><br>
+                        <small>Requires ${formatCurrency(analysis.exercise_cost)} cash</small>
+                    </div>
+                </div>
+            </div>
+
+            <div class="warning-box" style="margin-top: 1rem;">
+                <p><strong><i class="fas fa-exclamation-triangle"></i> Important:</strong></p>
+                <ul style="margin: 0.5rem 0 0 1.5rem;">
+                    <li>If you don't sell or exercise before expiration, and the option is in-the-money, it will be <strong>automatically exercised</strong></li>
+                    <li>You will need <strong>${formatCurrency(analysis.exercise_cost)}</strong> in your account to cover the exercise</li>
+                    <li>If you lack funds, your broker may sell the option or reject the exercise</li>
+                    <li><strong>Recommendation:</strong> Always sell DITM options before expiration rather than exercising</li>
+                </ul>
+            </div>
+        </div>
+
         <!-- Exit Strategy -->
         <div class="detail-section">
             <h4><i class="fas fa-flag-checkered"></i> Exit Strategy Recommendations</h4>
