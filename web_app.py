@@ -19,7 +19,7 @@ from recommendation_tracker import RecommendationTracker
 
 # Import PortManager from global installation
 import sys
-sys.path.insert(0, '/home/joe/port_manager')
+sys.path.insert(0, '/home/joe/ai/port_manager')
 from port_manager import PortManager
 
 load_dotenv()
