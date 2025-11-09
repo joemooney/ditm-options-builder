@@ -5,8 +5,35 @@ let currentPage = 'dashboard';
 let config = null;
 let tickers = [];
 
+// Theme Management
+function initializeTheme() {
+    // Get saved theme or default to dark
+    const savedTheme = localStorage.getItem('theme') || 'dark';
+    document.documentElement.setAttribute('data-theme', savedTheme);
+    updateThemeIcon(savedTheme);
+}
+
+function toggleTheme() {
+    const currentTheme = document.documentElement.getAttribute('data-theme');
+    const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+
+    document.documentElement.setAttribute('data-theme', newTheme);
+    localStorage.setItem('theme', newTheme);
+    updateThemeIcon(newTheme);
+}
+
+function updateThemeIcon(theme) {
+    const icon = document.querySelector('#theme-toggle i');
+    if (icon) {
+        // Show sun icon in dark mode (click to go light)
+        // Show moon icon in light mode (click to go dark)
+        icon.className = theme === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
+    }
+}
+
 // Initialize app
 document.addEventListener('DOMContentLoaded', () => {
+    initializeTheme();
     loadConfig();
     setupEventListeners();
     loadDashboard();
@@ -878,3 +905,4 @@ window.addTicker = addTicker;
 window.removeTickerFromList = removeTickerFromList;
 window.showPositionDetail = showPositionDetail;
 window.closePositionDetail = closePositionDetail;
+window.toggleTheme = toggleTheme;
