@@ -11,6 +11,7 @@ from flask import Flask, render_template, request, jsonify, send_from_directory
 from dotenv import load_dotenv
 import markdown
 import pandas as pd
+import numpy as np
 
 from ditm import (
     get_schwab_client, build_ditm_portfolio, find_ditm_calls,
@@ -151,6 +152,15 @@ def api_performance():
         # Calculate risk metrics
         risk_metrics = tracker.calculate_risk_metrics()
 
+        # Convert numpy/pandas types to Python native types in risk_metrics
+        for key, value in risk_metrics.items():
+            if pd.isna(value):
+                risk_metrics[key] = None
+            elif isinstance(value, (np.integer, np.int64)):
+                risk_metrics[key] = int(value)
+            elif isinstance(value, (np.floating, np.float64)):
+                risk_metrics[key] = float(value)
+
         # Portfolio summary - handle None values
         total_invested = float(df["Total_Cost"].fillna(0).sum())
         current_value = float(df["Current_Value"].fillna(0).sum())
@@ -173,11 +183,24 @@ def api_performance():
             "avg_days_held": float(avg_days) if not pd.isna(avg_days) else 0.0
         }
 
+        # Convert DataFrame to dict with proper type conversion
+        positions = df.to_dict('records')
+
+        # Convert numpy/pandas types to Python native types
+        for pos in positions:
+            for key, value in pos.items():
+                if pd.isna(value):
+                    pos[key] = None
+                elif isinstance(value, (np.integer, np.int64)):
+                    pos[key] = int(value)
+                elif isinstance(value, (np.floating, np.float64)):
+                    pos[key] = float(value)
+
         return jsonify({
             "success": True,
             "summary": summary,
             "risk_metrics": risk_metrics,
-            "positions": df.to_dict('records')
+            "positions": positions
         })
 
     except Exception as e:

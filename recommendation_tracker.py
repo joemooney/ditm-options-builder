@@ -302,6 +302,18 @@ class RecommendationTracker:
                 stock_return_pct = ((rec["current_stock_price"] - rec["stock_price_at_rec"])
                                    / rec["stock_price_at_rec"] * 100)
 
+            # Calculate DTE safely
+            exp_date = datetime.strptime(rec["expiration"], "%Y-%m-%d")
+            dte = max(0, (exp_date - datetime.now()).days)
+
+            # Handle None values properly
+            current_value = rec.get("current_value") or 0
+            unrealized_pnl = rec.get("unrealized_pnl") or 0
+            unrealized_pnl_pct = rec.get("unrealized_pnl_pct") or 0
+            current_stock_price = rec.get("current_stock_price") or 0
+
+            current_price = current_value / (rec["contracts_recommended"] * 100) if rec["contracts_recommended"] > 0 else 0
+
             rows.append({
                 "Rec_Date": rec["recommendation_date"][:10],
                 "Ticker": rec["ticker"],
@@ -309,15 +321,16 @@ class RecommendationTracker:
                 "Expiration": rec["expiration"],
                 "Status": rec["status"],
                 "Days_Held": days_held,
+                "DTE": dte,
                 "Entry_Price": rec["premium_mid"],
-                "Current_Price": rec.get("current_value", 0) / (rec["contracts_recommended"] * 100) if rec["contracts_recommended"] > 0 else 0,
+                "Current_Price": current_price,
                 "Contracts": rec["contracts_recommended"],
                 "Total_Cost": rec["total_cost"],
-                "Current_Value": rec.get("current_value", 0),
-                "P&L": rec.get("unrealized_pnl", 0),
-                "P&L_%": rec.get("unrealized_pnl_pct", 0),
+                "Current_Value": current_value,
+                "P&L": unrealized_pnl,
+                "P&L_%": unrealized_pnl_pct,
                 "Stock_Entry": rec["stock_price_at_rec"],
-                "Stock_Current": rec.get("current_stock_price", 0),
+                "Stock_Current": current_stock_price,
                 "Stock_Return_%": stock_return_pct,
                 "Delta_Entry": rec["delta_at_rec"],
                 "Delta_Current": rec.get("current_delta"),
@@ -364,6 +377,10 @@ class RecommendationTracker:
         # Assuming risk-free rate of 4% annually
         risk_free_rate = 4.0
         avg_days_held = df["Days_Held"].mean()
+
+        # Handle None/NaN values
+        if pd.isna(avg_days_held):
+            avg_days_held = 0
 
         if avg_days_held > 0 and metrics["std_return"] > 0:
             # Annualize the return
@@ -417,11 +434,15 @@ class RecommendationTracker:
             metrics["avg_loss_dollars"] = 0
 
         # Expectancy (average $ per trade)
-        metrics["expectancy"] = df["P&L"].mean()
+        expectancy = df["P&L"].mean()
+        metrics["expectancy"] = float(expectancy) if not pd.isna(expectancy) else 0.0
 
         # Recovery Factor (net profit / max drawdown)
         total_pnl = df["P&L"].sum()
-        metrics["recovery_factor"] = total_pnl / (metrics["max_single_loss"] * df["Total_Cost"].mean() / 100) if metrics["max_single_loss"] > 0 else float('inf')
+        total_cost_mean = df["Total_Cost"].mean()
+        if pd.isna(total_cost_mean):
+            total_cost_mean = 0
+        metrics["recovery_factor"] = total_pnl / (metrics["max_single_loss"] * total_cost_mean / 100) if metrics["max_single_loss"] > 0 and total_cost_mean > 0 else float('inf')
 
         # Calmar Ratio (annualized return / max drawdown)
         if avg_days_held > 0 and metrics["max_drawdown"] > 0:
