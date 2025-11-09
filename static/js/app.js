@@ -768,7 +768,17 @@ function displayPositionDetail(position, analysis) {
                 </div>
                 <div class="detail-item">
                     <div class="detail-label">Strike Price</div>
-                    <div class="detail-value">${formatCurrency(position.Strike)}</div>
+                    <div class="detail-value">${formatCurrency(analysis.strike_price)}</div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">Entry Option Price</div>
+                    <div class="detail-value">${formatCurrency(analysis.entry_option_price)}</div>
+                    <small>Premium paid per contract</small>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">Current Option Price</div>
+                    <div class="detail-value">${formatCurrency(analysis.current_option_price)}</div>
+                    <small>Current value per contract</small>
                 </div>
                 <div class="detail-item">
                     <div class="detail-label">Contracts</div>
@@ -778,6 +788,12 @@ function displayPositionDetail(position, analysis) {
                 <div class="detail-item">
                     <div class="detail-label">Intrinsic Value</div>
                     <div class="detail-value">${formatCurrency(analysis.intrinsic_value)}</div>
+                    <small>Stock - Strike</small>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">Time Value</div>
+                    <div class="detail-value">${formatCurrency(analysis.time_value)}</div>
+                    <small>Option - Intrinsic</small>
                 </div>
             </div>
         </div>

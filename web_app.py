@@ -433,18 +433,33 @@ def api_position_detail(ticker, strike, expiration):
 
         pos = position.iloc[0].to_dict()
 
-        # Calculate additional metrics with null safety
-        current_price = pos.get('Current_Stock_Price') or 0
+        # Get stock price - fetch fresh if not available
+        current_stock_price = pos.get('Stock_Current') or pos.get('Current_Stock_Price')
+        if not current_stock_price or current_stock_price == 0:
+            # Fetch current stock price
+            quote_resp = client.get_quote(ticker.upper())
+            if quote_resp.status_code == 200:
+                quote_data = quote_resp.json()
+                current_stock_price = quote_data[ticker.upper()]["quote"]["lastPrice"]
+            else:
+                current_stock_price = pos.get('Stock_Entry') or 0
+
+        # Option pricing
+        entry_price = pos.get('Entry_Price') or 0  # Premium at entry (mid price)
         current_value = pos.get('Current_Value') or 0
-        option_price = current_value / 100 if current_value else 0  # Per share
-        total_cost = pos.get('Total_Cost') or 0
         contracts = pos.get('Contracts') or 1
 
-        # Breakeven calculation
+        # Current option price per contract
+        current_option_price = current_value / contracts if contracts > 0 and current_value > 0 else 0
+
+        # Cost per share (premium paid divided by 100 shares per contract)
+        total_cost = pos.get('Total_Cost') or 0
         if total_cost > 0 and contracts > 0:
             cost_per_share = total_cost / (contracts * 100)
         else:
-            cost_per_share = 0
+            cost_per_share = entry_price / 100 if entry_price > 0 else 0
+
+        # Breakeven = Strike + Premium Paid Per Share
         breakeven = float(strike) + cost_per_share
 
         # Profit targets
@@ -472,7 +487,7 @@ def api_position_detail(ticker, strike, expiration):
         }
 
         # Current position vs breakeven
-        distance_to_breakeven = current_price - breakeven
+        distance_to_breakeven = current_stock_price - breakeven
         distance_to_breakeven_pct = (distance_to_breakeven / breakeven * 100) if breakeven > 0 else 0
 
         # Safe conversions for response
@@ -483,14 +498,27 @@ def api_position_detail(ticker, strike, expiration):
             "success": True,
             "position": pos,
             "analysis": {
+                # Pricing
+                "entry_option_price": entry_price,
+                "current_option_price": current_option_price,
+                "current_stock_price": current_stock_price,
+                "strike_price": float(strike),
+
+                # Breakeven
                 "breakeven": breakeven,
                 "cost_per_share": cost_per_share,
-                "current_stock_price": current_price,
                 "distance_to_breakeven": distance_to_breakeven,
                 "distance_to_breakeven_pct": distance_to_breakeven_pct,
-                "exit_targets": exit_targets,
+
+                # Position details
                 "contracts": int(contracts),
-                "intrinsic_value": max(0, current_price - float(strike)),
+                "intrinsic_value": max(0, current_stock_price - float(strike)),
+                "time_value": max(0, current_option_price - max(0, current_stock_price - float(strike))),
+
+                # Exit strategy
+                "exit_targets": exit_targets,
+
+                # Time
                 "days_held": int(days_held) if days_held is not None else 0,
                 "days_to_expiration": int(days_to_expiration) if days_to_expiration is not None else 0
             }
