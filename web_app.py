@@ -10,6 +10,7 @@ from pathlib import Path
 from flask import Flask, render_template, request, jsonify, send_from_directory
 from dotenv import load_dotenv
 import markdown
+import pandas as pd
 
 from ditm import (
     get_schwab_client, build_ditm_portfolio, find_ditm_calls,
@@ -150,10 +151,14 @@ def api_performance():
         # Calculate risk metrics
         risk_metrics = tracker.calculate_risk_metrics()
 
-        # Portfolio summary
-        total_invested = float(df["Total_Cost"].sum())
-        current_value = float(df["Current_Value"].sum())
-        total_pnl = float(df["P&L"].sum())
+        # Portfolio summary - handle None values
+        total_invested = float(df["Total_Cost"].fillna(0).sum())
+        current_value = float(df["Current_Value"].fillna(0).sum())
+        total_pnl = float(df["P&L"].fillna(0).sum())
+
+        # Safe mean calculations
+        avg_return = df["P&L_%"].mean()
+        avg_days = df["Days_Held"].mean()
 
         summary = {
             "total_recommendations": len(df),
@@ -164,8 +169,8 @@ def api_performance():
             "total_pnl": total_pnl,
             "total_pnl_pct": (total_pnl / total_invested * 100) if total_invested > 0 else 0,
             "win_rate": (len(df[df["P&L"] > 0]) / len(df) * 100) if len(df) > 0 else 0,
-            "avg_return": float(df["P&L_%"].mean()),
-            "avg_days_held": float(df["Days_Held"].mean())
+            "avg_return": float(avg_return) if not pd.isna(avg_return) else 0.0,
+            "avg_days_held": float(avg_days) if not pd.isna(avg_days) else 0.0
         }
 
         return jsonify({
