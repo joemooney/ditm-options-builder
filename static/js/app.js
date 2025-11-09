@@ -368,7 +368,7 @@ async function loadDoc(docName) {
 }
 
 // Load settings
-function loadSettings() {
+async function loadSettings() {
     if (!config || !config.filters) return;
 
     document.getElementById('setting-min-delta').value = config.filters.MIN_DELTA;
@@ -378,6 +378,126 @@ function loadSettings() {
     document.getElementById('setting-max-iv').value = config.filters.MAX_IV;
     document.getElementById('setting-max-spread').value = config.filters.MAX_SPREAD_PCT;
     document.getElementById('setting-min-oi').value = config.filters.MIN_OI;
+
+    // Load ticker list
+    await loadTickerList();
+
+    // Allow Enter key on new ticker input
+    document.getElementById('new-ticker-input').addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            addTicker();
+        }
+    });
+}
+
+// Load ticker list
+async function loadTickerList() {
+    try {
+        const response = await fetch('/api/tickers');
+        const data = await response.json();
+
+        if (data.success) {
+            displayTickerList(data.tickers);
+        }
+    } catch (error) {
+        console.error('Error loading tickers:', error);
+        showToast('Error loading ticker list', 'error');
+    }
+}
+
+// Display ticker list
+function displayTickerList(tickerList) {
+    const container = document.getElementById('ticker-list');
+    const countBadge = document.getElementById('ticker-count');
+
+    countBadge.textContent = `${tickerList.length} ticker${tickerList.length !== 1 ? 's' : ''}`;
+
+    if (tickerList.length === 0) {
+        container.innerHTML = '<p class="text-muted">No tickers in watchlist. Add some above!</p>';
+        return;
+    }
+
+    let html = '<div class="ticker-grid">';
+    tickerList.forEach(ticker => {
+        html += `
+            <div class="ticker-item">
+                <span class="ticker-symbol">${ticker}</span>
+                <button class="btn-icon-danger" onclick="removeTickerFromList('${ticker}')"
+                        title="Remove ${ticker}">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </div>
+        `;
+    });
+    html += '</div>';
+
+    container.innerHTML = html;
+}
+
+// Add ticker to watchlist
+async function addTicker() {
+    const input = document.getElementById('new-ticker-input');
+    const ticker = input.value.trim().toUpperCase();
+
+    if (!ticker) {
+        showToast('Please enter a ticker symbol', 'error');
+        return;
+    }
+
+    // Basic validation
+    if (!/^[A-Z]{1,5}$/.test(ticker)) {
+        showToast('Invalid ticker symbol. Use 1-5 letters only.', 'error');
+        return;
+    }
+
+    try {
+        const response = await fetch('/api/tickers/add', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ ticker: ticker })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            input.value = '';
+            displayTickerList(data.tickers);
+            showToast(`Added ${ticker} to watchlist`, 'success');
+        } else {
+            showToast(data.error || 'Failed to add ticker', 'error');
+        }
+    } catch (error) {
+        console.error('Error adding ticker:', error);
+        showToast('Error adding ticker: ' + error.message, 'error');
+    }
+}
+
+// Remove ticker from watchlist
+async function removeTickerFromList(ticker) {
+    if (!confirm(`Remove ${ticker} from watchlist?`)) {
+        return;
+    }
+
+    try {
+        const response = await fetch('/api/tickers/remove', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ ticker: ticker })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            displayTickerList(data.tickers);
+            showToast(`Removed ${ticker} from watchlist`, 'success');
+        } else {
+            showToast(data.error || 'Failed to remove ticker', 'error');
+        }
+    } catch (error) {
+        console.error('Error removing ticker:', error);
+        showToast('Error removing ticker: ' + error.message, 'error');
+    }
 }
 
 // Handle settings submission
@@ -489,3 +609,5 @@ window.removeTicker = removeTicker;
 window.updatePerformance = updatePerformance;
 window.loadDoc = loadDoc;
 window.resetSettings = resetSettings;
+window.addTicker = addTicker;
+window.removeTickerFromList = removeTickerFromList;

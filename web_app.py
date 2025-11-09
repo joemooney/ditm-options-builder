@@ -243,6 +243,80 @@ def api_docs(doc_name):
         return jsonify({"success": False, "error": str(e)}), 500
 
 
+@app.route('/api/tickers', methods=['GET'])
+def api_get_tickers():
+    """Get current ticker list."""
+    config = load_config()
+    return jsonify({
+        "success": True,
+        "tickers": config.get("tickers", [])
+    })
+
+
+@app.route('/api/tickers/add', methods=['POST'])
+def api_add_ticker():
+    """Add a ticker to the watchlist."""
+    try:
+        data = request.json
+        ticker = data.get('ticker', '').upper().strip()
+
+        if not ticker:
+            return jsonify({"success": False, "error": "Ticker symbol required"}), 400
+
+        # Basic validation
+        if not ticker.isalpha() or len(ticker) > 5:
+            return jsonify({"success": False, "error": "Invalid ticker symbol"}), 400
+
+        config = load_config()
+        tickers = config.get("tickers", [])
+
+        if ticker in tickers:
+            return jsonify({"success": False, "error": f"{ticker} already in watchlist"}), 400
+
+        tickers.append(ticker)
+        config["tickers"] = tickers
+        save_config(config)
+
+        return jsonify({
+            "success": True,
+            "message": f"Added {ticker} to watchlist",
+            "tickers": tickers
+        })
+
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route('/api/tickers/remove', methods=['POST'])
+def api_remove_ticker():
+    """Remove a ticker from the watchlist."""
+    try:
+        data = request.json
+        ticker = data.get('ticker', '').upper().strip()
+
+        if not ticker:
+            return jsonify({"success": False, "error": "Ticker symbol required"}), 400
+
+        config = load_config()
+        tickers = config.get("tickers", [])
+
+        if ticker not in tickers:
+            return jsonify({"success": False, "error": f"{ticker} not in watchlist"}), 404
+
+        tickers.remove(ticker)
+        config["tickers"] = tickers
+        save_config(config)
+
+        return jsonify({
+            "success": True,
+            "message": f"Removed {ticker} from watchlist",
+            "tickers": tickers
+        })
+
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
 @app.route('/api/health')
 def api_health():
     """Health check endpoint."""

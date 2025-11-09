@@ -190,7 +190,29 @@ Documents are **converted from Markdown to HTML** for easy reading in the browse
 
 ### ⚙️ Settings
 
-**Configure filter parameters** for option screening.
+**Configure filter parameters and manage your ticker watchlist.**
+
+#### Ticker Watchlist Management:
+
+The Settings page now includes a **Ticker Watchlist** section where you can:
+
+1. **Add Tickers**
+   - Type ticker symbol (e.g., "AAPL") in the input field
+   - Click "Add" button or press Enter
+   - Ticker validation ensures only valid symbols are added
+   - Duplicates are prevented automatically
+
+2. **View Current Watchlist**
+   - All tickers displayed in a grid layout
+   - Shows ticker count badge
+   - Easy visual scanning of your watchlist
+
+3. **Remove Tickers**
+   - Click the trash icon next to any ticker
+   - Confirmation prompt prevents accidental removal
+   - Instant update of watchlist
+
+These tickers are saved in `web_config.json` and persist across sessions. You can also manage tickers via the command line using `manage_tickers.py`.
 
 #### Customizable Filters:
 
@@ -229,6 +251,9 @@ Documents are **converted from Markdown to HTML** for easy reading in the browse
 | `/api/scan` | POST | Run options scan |
 | `/api/performance` | GET | Get performance data |
 | `/api/ticker/analyze/<ticker>` | GET | Analyze single ticker |
+| `/api/tickers` | GET | Get ticker watchlist |
+| `/api/tickers/add` | POST | Add ticker to watchlist |
+| `/api/tickers/remove` | POST | Remove ticker from watchlist |
 | `/api/docs/<doc_name>` | GET | Serve documentation |
 | `/api/health` | GET | Health check |
 

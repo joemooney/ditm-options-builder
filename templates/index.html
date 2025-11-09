@@ -245,6 +245,36 @@
                     <p>Configure filter parameters and preferences</p>
                 </div>
 
+                <!-- Ticker Management -->
+                <div class="card">
+                    <div class="card-header">
+                        <h2><i class="fas fa-list"></i> Ticker Watchlist</h2>
+                    </div>
+                    <div class="card-body">
+                        <div class="form-group">
+                            <label for="new-ticker-input">
+                                <i class="fas fa-plus-circle"></i> Add Ticker Symbol
+                            </label>
+                            <div class="ticker-add-container">
+                                <input type="text" id="new-ticker-input" class="form-control"
+                                       placeholder="Enter ticker (e.g., AAPL)" maxlength="5"
+                                       style="text-transform: uppercase;">
+                                <button type="button" class="btn btn-primary" onclick="addTicker()">
+                                    <i class="fas fa-plus"></i> Add
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="ticker-list-header">
+                            <h3>Current Watchlist</h3>
+                            <span id="ticker-count" class="badge">0 tickers</span>
+                        </div>
+                        <div id="ticker-list" class="ticker-list">
+                            <p class="text-muted">Loading...</p>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="card">
                     <div class="card-header">
                         <h2><i class="fas fa-sliders-h"></i> Filter Parameters</h2>

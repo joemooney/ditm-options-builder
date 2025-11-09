@@ -1,0 +1,10 @@
+{
+  "tickers": [
+    "AAPL",
+    "MSFT",
+    "GOOGL",
+    "NVDA"
+  ],
+  "target_capital": 50000,
+  "filters": {}
+}
