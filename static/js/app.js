@@ -144,7 +144,7 @@ function updateOpenPositions(positions) {
 
     openPositions.slice(0, 10).forEach(pos => {
         const pnlClass = pos['P&L'] >= 0 ? 'positive' : 'negative';
-        html += '<tr>';
+        html += `<tr class="clickable-row" onclick="showPositionDetail('${pos.Ticker}', '${pos.Strike}', '${pos.Expiration}')" style="cursor: pointer;">`;
         html += `<td><strong>${pos.Ticker}</strong></td>`;
         html += `<td>${pos.Strike}</td>`;
         html += `<td>${pos.Expiration}</td>`;
@@ -341,7 +341,7 @@ function displayPerformance(data) {
 
         data.positions.forEach(pos => {
             const pnlClass = pos['P&L'] >= 0 ? 'positive' : 'negative';
-            html += '<tr>';
+            html += `<tr class="clickable-row" onclick="showPositionDetail('${pos.Ticker}', '${pos.Strike}', '${pos.Expiration}')" style="cursor: pointer;">`;
             html += `<td>${pos.Rec_Date}</td>`;
             html += `<td><strong>${pos.Ticker}</strong></td>`;
             html += `<td>${pos.Strike}</td>`;
@@ -635,6 +635,239 @@ function showToast(message, type = 'info') {
     }, 5000);
 }
 
+// Show position detail modal
+async function showPositionDetail(ticker, strike, expiration) {
+    const modal = document.getElementById('position-detail-modal');
+    const content = document.getElementById('position-detail-content');
+
+    modal.style.display = 'flex';
+    content.innerHTML = '<p class="text-muted">Loading position analysis...</p>';
+
+    try {
+        const response = await fetch(`/api/position/${ticker}/${strike}/${expiration}`);
+        const data = await response.json();
+
+        if (data.success) {
+            displayPositionDetail(data.position, data.analysis);
+        } else {
+            content.innerHTML = `<p class="text-danger">Error: ${data.error}</p>`;
+        }
+    } catch (error) {
+        content.innerHTML = `<p class="text-danger">Error loading position: ${error.message}</p>`;
+        console.error(error);
+    }
+}
+
+// Display position detail
+function displayPositionDetail(position, analysis) {
+    const content = document.getElementById('position-detail-content');
+
+    const pnl = position['P&L'] || 0;
+    const pnlPct = position['P&L_%'] || 0;
+    const status = position.Status || 'unknown';
+    const isProfitable = pnl >= 0;
+
+    let html = `
+        <!-- Position Header -->
+        <div class="position-header">
+            <div class="position-title">
+                <h3>${position.Ticker} $${position.Strike} Call - ${position.Expiration}</h3>
+                <p class="text-muted">Recommended on ${position.Rec_Date}</p>
+            </div>
+            <div class="position-status ${status}">${status.toUpperCase()}</div>
+        </div>
+
+        <!-- Current Performance -->
+        <div class="detail-section">
+            <h4><i class="fas fa-chart-line"></i> Current Performance</h4>
+            <div class="detail-grid">
+                <div class="detail-item ${isProfitable ? 'positive' : 'negative'}">
+                    <div class="detail-label">Profit/Loss</div>
+                    <div class="detail-value large">${formatCurrency(pnl)}</div>
+                    <small>${formatPercent(pnlPct)}</small>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">Total Invested</div>
+                    <div class="detail-value">${formatCurrency(position.Total_Cost)}</div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">Current Value</div>
+                    <div class="detail-value">${formatCurrency(position.Current_Value)}</div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">Days Held</div>
+                    <div class="detail-value">${analysis.days_held}</div>
+                    <small>${analysis.days_to_expiration} DTE remaining</small>
+                </div>
+            </div>
+        </div>
+
+        <!-- Option Details -->
+        <div class="detail-section">
+            <h4><i class="fas fa-info-circle"></i> Option Details</h4>
+            <div class="detail-grid">
+                <div class="detail-item">
+                    <div class="detail-label">Current Stock Price</div>
+                    <div class="detail-value">${formatCurrency(analysis.current_stock_price)}</div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">Strike Price</div>
+                    <div class="detail-value">${formatCurrency(position.Strike)}</div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">Contracts</div>
+                    <div class="detail-value">${analysis.contracts}</div>
+                    <small>${analysis.contracts * 100} shares equivalent</small>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">Intrinsic Value</div>
+                    <div class="detail-value">${formatCurrency(analysis.intrinsic_value)}</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Breakeven Analysis -->
+        <div class="detail-section">
+            <h4><i class="fas fa-balance-scale"></i> Breakeven Analysis</h4>
+            <div class="breakeven-indicator">
+                <i class="fas ${analysis.distance_to_breakeven >= 0 ? 'fa-check-circle' : 'fa-exclamation-circle'}"></i>
+                <div>
+                    <strong>Breakeven Price: ${formatCurrency(analysis.breakeven)}</strong><br>
+                    <span>Stock is currently ${formatCurrency(Math.abs(analysis.distance_to_breakeven))}
+                    ${analysis.distance_to_breakeven >= 0 ? 'above' : 'below'} breakeven
+                    (${formatPercent(Math.abs(analysis.distance_to_breakeven_pct))})</span>
+                </div>
+            </div>
+            <div class="detail-grid">
+                <div class="detail-item">
+                    <div class="detail-label">Cost Per Share</div>
+                    <div class="detail-value">${formatCurrency(analysis.cost_per_share)}</div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">Breakeven Stock Price</div>
+                    <div class="detail-value">${formatCurrency(analysis.breakeven)}</div>
+                    <small>Strike + Cost/Share</small>
+                </div>
+            </div>
+        </div>
+
+        <!-- Exit Strategy -->
+        <div class="detail-section">
+            <h4><i class="fas fa-flag-checkered"></i> Exit Strategy Recommendations</h4>
+
+            <div class="exit-strategy-box">
+                <h5><i class="fas fa-trophy"></i> Profit Targets</h5>
+                <p>Consider taking profits at these levels:</p>
+                <div class="exit-targets">
+                    <div class="exit-target">
+                        <div class="exit-target-label">50% Profit Target</div>
+                        <div class="exit-target-value">${formatCurrency(analysis.exit_targets.take_profit_50.price)}</div>
+                        <small>Gain: ${formatCurrency(analysis.exit_targets.take_profit_50.gain)}</small>
+                    </div>
+                    <div class="exit-target">
+                        <div class="exit-target-label">100% Profit Target</div>
+                        <div class="exit-target-value">${formatCurrency(analysis.exit_targets.take_profit_100.price)}</div>
+                        <small>Gain: ${formatCurrency(analysis.exit_targets.take_profit_100.gain)}</small>
+                    </div>
+                </div>
+                <p style="margin-top: 1rem;"><strong>Strategy:</strong> Sell 50% of position at first target, let remainder run to second target or exit before expiration.</p>
+            </div>
+
+            <div class="warning-box">
+                <p><strong><i class="fas fa-exclamation-triangle"></i> Stop Loss:</strong>
+                Consider exiting if option price falls to ${formatCurrency(analysis.exit_targets.stop_loss.price)}
+                (20% loss = ${formatCurrency(analysis.exit_targets.stop_loss.loss)})</p>
+            </div>
+        </div>
+
+        <!-- Execution Instructions -->
+        <div class="detail-section">
+            <h4><i class="fas fa-tasks"></i> How to Execute This Trade</h4>
+            <ul class="instruction-list">
+                <li data-step="1">
+                    <div>
+                        <strong>Log into Schwab</strong><br>
+                        Navigate to Trade → Options
+                    </div>
+                </li>
+                <li data-step="2">
+                    <div>
+                        <strong>Enter Position Details</strong><br>
+                        Symbol: ${position.Ticker}, Strike: $${position.Strike},
+                        Expiration: ${position.Expiration}, Type: CALL
+                    </div>
+                </li>
+                <li data-step="3">
+                    <div>
+                        <strong>Select Action</strong><br>
+                        Action: BUY TO OPEN, Quantity: ${analysis.contracts} contract(s)
+                    </div>
+                </li>
+                <li data-step="4">
+                    <div>
+                        <strong>Set Order Type</strong><br>
+                        Use LIMIT order at or below current ask price to control cost
+                    </div>
+                </li>
+                <li data-step="5">
+                    <div>
+                        <strong>Review and Submit</strong><br>
+                        Verify total cost ≈ ${formatCurrency(position.Total_Cost)}, then submit
+                    </div>
+                </li>
+            </ul>
+        </div>
+
+        <!-- Exit Instructions -->
+        <div class="detail-section">
+            <h4><i class="fas fa-sign-out-alt"></i> How to Exit This Position</h4>
+            <ul class="instruction-list">
+                <li data-step="1">
+                    <div>
+                        <strong>Monitor Price Targets</strong><br>
+                        Set price alerts at ${formatCurrency(analysis.exit_targets.take_profit_50.price)} (50% profit)
+                        and ${formatCurrency(analysis.exit_targets.take_profit_100.price)} (100% profit)
+                    </div>
+                </li>
+                <li data-step="2">
+                    <div>
+                        <strong>Scale Out Strategy</strong><br>
+                        At 50% profit: Sell ${Math.floor(analysis.contracts / 2)} contract(s) to lock in gains<br>
+                        At 100% profit: Sell remaining ${Math.ceil(analysis.contracts / 2)} contract(s)
+                    </div>
+                </li>
+                <li data-step="3">
+                    <div>
+                        <strong>To Exit</strong><br>
+                        Action: SELL TO CLOSE, use LIMIT order to maximize proceeds
+                    </div>
+                </li>
+                <li data-step="4">
+                    <div>
+                        <strong>Before Expiration</strong><br>
+                        Close position at least 1-2 weeks before expiration to avoid time decay acceleration
+                    </div>
+                </li>
+            </ul>
+        </div>
+
+        <!-- Risk Disclaimer -->
+        <div class="warning-box">
+            <p><strong><i class="fas fa-info-circle"></i> Important:</strong>
+            This is educational analysis only. Options trading involves substantial risk.
+            Past performance does not guarantee future results. Consult with a financial advisor
+            before making investment decisions.</p>
+        </div>
+    `;
+
+    content.innerHTML = html;
+}
+
+// Close position detail modal
+function closePositionDetail() {
+    document.getElementById('position-detail-modal').style.display = 'none';
+}
+
 // Export functions for inline use
 window.showPage = showPage;
 window.removeTicker = removeTicker;
@@ -643,3 +876,5 @@ window.loadDoc = loadDoc;
 window.resetSettings = resetSettings;
 window.addTicker = addTicker;
 window.removeTickerFromList = removeTickerFromList;
+window.showPositionDetail = showPositionDetail;
+window.closePositionDetail = closePositionDetail;

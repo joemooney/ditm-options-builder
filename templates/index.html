@@ -387,6 +387,22 @@
     <!-- Toast Notifications -->
     <div id="toast-container" class="toast-container"></div>
 
+    <!-- Position Detail Modal -->
+    <div id="position-detail-modal" class="modal" style="display: none;">
+        <div class="modal-backdrop" onclick="closePositionDetail()"></div>
+        <div class="modal-content modal-large">
+            <div class="modal-header">
+                <h2 id="modal-title"><i class="fas fa-chart-line"></i> Position Analysis</h2>
+                <button class="modal-close" onclick="closePositionDetail()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body" id="position-detail-content">
+                <p class="text-muted">Loading...</p>
+            </div>
+        </div>
+    </div>
+
     <script src="/static/js/app.js"></script>
 </body>
 </html>

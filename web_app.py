@@ -317,6 +317,85 @@ def api_remove_ticker():
         return jsonify({"success": False, "error": str(e)}), 500
 
 
+@app.route('/api/position/<ticker>/<strike>/<expiration>', methods=['GET'])
+def api_position_detail(ticker, strike, expiration):
+    """Get detailed analysis for a specific position."""
+    try:
+        # Get current price
+        client = get_schwab_client()
+
+        # Find the position in recommendations
+        df = tracker.get_performance_summary()
+        position = df[
+            (df['Ticker'] == ticker.upper()) &
+            (df['Strike'] == float(strike)) &
+            (df['Expiration'] == expiration)
+        ]
+
+        if position.empty:
+            return jsonify({"success": False, "error": "Position not found"}), 404
+
+        pos = position.iloc[0].to_dict()
+
+        # Calculate additional metrics
+        current_price = pos.get('Current_Stock_Price', 0)
+        option_price = pos.get('Current_Value', 0) / 100  # Per share
+        total_cost = pos['Total_Cost']
+        contracts = pos.get('Contracts', 1)
+
+        # Breakeven calculation
+        cost_per_share = total_cost / (contracts * 100)
+        breakeven = float(strike) + cost_per_share
+
+        # Profit targets
+        profit_25 = cost_per_share * 1.25
+        profit_50 = cost_per_share * 1.50
+        profit_100 = cost_per_share * 2.00
+
+        # Exit strategy calculations
+        exit_targets = {
+            "take_profit_50": {
+                "price": profit_50,
+                "gain": (profit_50 - cost_per_share) * contracts * 100,
+                "gain_pct": 50
+            },
+            "take_profit_100": {
+                "price": profit_100,
+                "gain": (profit_100 - cost_per_share) * contracts * 100,
+                "gain_pct": 100
+            },
+            "stop_loss": {
+                "price": cost_per_share * 0.80,
+                "loss": (cost_per_share * 0.80 - cost_per_share) * contracts * 100,
+                "loss_pct": -20
+            }
+        }
+
+        # Current position vs breakeven
+        distance_to_breakeven = current_price - breakeven
+        distance_to_breakeven_pct = (distance_to_breakeven / breakeven * 100) if breakeven > 0 else 0
+
+        return jsonify({
+            "success": True,
+            "position": pos,
+            "analysis": {
+                "breakeven": breakeven,
+                "cost_per_share": cost_per_share,
+                "current_stock_price": current_price,
+                "distance_to_breakeven": distance_to_breakeven,
+                "distance_to_breakeven_pct": distance_to_breakeven_pct,
+                "exit_targets": exit_targets,
+                "contracts": contracts,
+                "intrinsic_value": max(0, current_price - float(strike)),
+                "days_held": pos.get('Days_Held', 0),
+                "days_to_expiration": pos.get('DTE', 0)
+            }
+        })
+
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
 @app.route('/api/health')
 def api_health():
     """Health check endpoint."""
