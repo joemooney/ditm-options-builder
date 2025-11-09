@@ -18,15 +18,75 @@
 
 ### Basic Concept
 
-An **option** is a contract that gives you the **right** (but not the obligation) to buy or sell a stock at a specific price by a certain date.
+An **option** is a contract between two parties: a **buyer** and a **seller**. Understanding both perspectives is crucial.
 
-- **Call Option**: Right to **BUY** stock at a specific price
-- **Put Option**: Right to **SELL** stock at a specific price
+- **Call Option**: Contract for the right to **BUY** stock at a specific price
+- **Put Option**: Contract for the right to **SELL** stock at a specific price
 
-**Example**:
+#### The Buyer's Perspective (Long Position)
+
+When you **buy** an option, you are purchasing the **right** (but not the obligation) to execute the contract.
+
+**Call Option Buyer Example**:
 - AAPL stock is trading at $225
-- You buy 1 AAPL call option with a $200 strike price
-- This gives you the right to buy 100 shares of AAPL at $200 each (even though it's trading at $225)
+- You buy 1 AAPL call option with a $200 strike price for $28 premium
+- You pay: $2,800 ($28 × 100 shares)
+- You get: The **right** to buy 100 shares of AAPL at $200 each (even though it's trading at $225)
+- Your choice: Exercise it (buy at $200), sell the option, or let it expire
+- **Maximum loss**: $2,800 (the premium you paid)
+- **Maximum gain**: Unlimited (stock can rise indefinitely)
+
+**Put Option Buyer Example**:
+- AAPL stock is trading at $225
+- You buy 1 AAPL put option with a $250 strike price for $30 premium
+- You pay: $3,000 ($30 × 100 shares)
+- You get: The **right** to sell 100 shares of AAPL at $250 each (even if it drops to $200)
+- **Maximum loss**: $3,000 (the premium you paid)
+- **Maximum gain**: $22,000 (if stock drops to $0, you can sell at $250)
+
+#### The Seller's Perspective (Short Position)
+
+When you **sell** (or "write") an option, you are accepting the **obligation** to fulfill the contract if the buyer exercises it. In exchange, you collect the premium.
+
+**Call Option Seller Example**:
+- AAPL stock is trading at $225
+- You sell 1 AAPL call option with a $200 strike price
+- You receive: $2,800 premium (your maximum profit)
+- Your obligation: If the buyer exercises, you **must sell** 100 shares of AAPL at $200 each
+- **Maximum gain**: $2,800 (the premium you collected)
+- **Maximum loss**: Unlimited (if stock rises to $500, you must sell at $200, losing $300/share = $30,000)
+
+**Put Option Seller Example**:
+- AAPL stock is trading at $225
+- You sell 1 AAPL put option with a $250 strike price
+- You receive: $3,000 premium (your maximum profit)
+- Your obligation: If the buyer exercises, you **must buy** 100 shares of AAPL at $250 each
+- **Maximum gain**: $3,000 (the premium you collected)
+- **Maximum loss**: $25,000 (if stock drops to $0, you must buy at $250)
+
+#### Key Differences Between Buyers and Sellers
+
+| Aspect | Option Buyer (Long) | Option Seller (Short) |
+|--------|-------------------|---------------------|
+| **Pays/Receives** | Pays premium | Receives premium |
+| **Rights** | Has the right to exercise | No rights, only obligations |
+| **Obligation** | No obligation | Must fulfill if exercised |
+| **Max Loss** | Premium paid (limited) | Potentially unlimited (calls) or substantial (puts) |
+| **Max Gain** | Unlimited (calls) or substantial (puts) | Premium received (limited) |
+| **Direction** | Wants option to increase in value | Wants option to decrease in value |
+| **Typical Goal** | Leverage, speculation, hedging | Income generation, obligation acceptance |
+
+#### Who Is On The Other Side?
+
+When you buy an option, someone else is selling it. The seller could be:
+
+1. **Market Maker**: Professional traders providing liquidity, managing risk through hedging
+2. **Covered Call Writer**: Stock owner selling calls against their shares for income
+3. **Cash-Secured Put Writer**: Investor willing to buy stock at lower price, collecting premium
+4. **Institutional Hedger**: Large fund offsetting other portfolio risks
+5. **Retail Trader**: Individual speculating or generating income
+
+**Important**: This DITM tool focuses on **buying** options (long positions), not selling them. We are always on the buyer side, paying premium for rights and limited risk.
 
 ### Why Use Options Instead of Stock?
 
