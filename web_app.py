@@ -159,7 +159,18 @@ def api_performance():
             elif isinstance(value, (np.integer, np.int64)):
                 risk_metrics[key] = int(value)
             elif isinstance(value, (np.floating, np.float64)):
-                risk_metrics[key] = float(value)
+                # Handle infinity values - convert to None for JSON
+                float_val = float(value)
+                if np.isinf(float_val):
+                    risk_metrics[key] = None
+                else:
+                    risk_metrics[key] = float_val
+            elif isinstance(value, float):
+                # Handle Python float infinity
+                if np.isinf(value):
+                    risk_metrics[key] = None
+                else:
+                    risk_metrics[key] = value
 
         # Portfolio summary - handle None values
         total_invested = float(df["Total_Cost"].fillna(0).sum())
