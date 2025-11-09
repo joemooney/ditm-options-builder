@@ -771,9 +771,18 @@ function displayPositionDetail(position, analysis) {
                     <div class="detail-value">${formatCurrency(analysis.strike_price)}</div>
                 </div>
                 <div class="detail-item">
-                    <div class="detail-label">Entry Option Price</div>
-                    <div class="detail-value">${formatCurrency(analysis.entry_option_price)}</div>
-                    <small>Premium paid per contract</small>
+                    <div class="detail-label">Entry Bid/Ask/Mid</div>
+                    <div class="detail-value">
+                        ${formatCurrency(analysis.entry_bid)} /
+                        ${formatCurrency(analysis.entry_ask)} /
+                        ${formatCurrency(analysis.entry_mid)}
+                    </div>
+                    <small>Spread: ${formatCurrency(analysis.entry_spread)} (${analysis.entry_spread_pct.toFixed(2)}%)</small>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">Entry Price Used</div>
+                    <div class="detail-value">${formatCurrency(analysis.entry_price_used)}</div>
+                    <small>${analysis.use_ask_for_entry ? 'Ask (realistic)' : 'Mid (optimistic)'} - for breakeven calc</small>
                 </div>
                 <div class="detail-item">
                     <div class="detail-label">Current Option Price</div>

@@ -44,6 +44,7 @@ def load_config():
     return {
         "tickers": ["AAPL", "MSFT", "GOOGL", "JNJ", "JPM"],
         "target_capital": 50000,
+        "use_ask_for_entry": True,  # Use ask price for breakeven (realistic), False for mid price (optimistic)
         "filters": {
             "MIN_DELTA": MIN_DELTA,
             "MAX_DELTA": MAX_DELTA,
@@ -445,7 +446,17 @@ def api_position_detail(ticker, strike, expiration):
                 current_stock_price = pos.get('Stock_Entry') or 0
 
         # Option pricing
-        entry_price = pos.get('Entry_Price') or 0  # Premium at entry (mid price)
+        entry_bid = pos.get('Entry_Bid') or 0
+        entry_ask = pos.get('Entry_Ask') or 0
+        entry_mid = pos.get('Entry_Mid') or pos.get('Entry_Price') or 0
+
+        # Determine which price to use for breakeven calculation based on config
+        config = load_config()
+        use_ask_for_entry = config.get('use_ask_for_entry', True)
+
+        # Use ask price for realistic breakeven (you buy at ask), or mid for optimistic
+        entry_price_for_breakeven = entry_ask if use_ask_for_entry and entry_ask > 0 else entry_mid
+
         current_value = pos.get('Current_Value') or 0
         contracts = pos.get('Contracts') or 1
 
@@ -457,9 +468,10 @@ def api_position_detail(ticker, strike, expiration):
         if total_cost > 0 and contracts > 0:
             cost_per_share = total_cost / (contracts * 100)
         else:
-            cost_per_share = entry_price / 100 if entry_price > 0 else 0
+            # Use ask price for realistic cost, or mid if ask not available
+            cost_per_share = entry_price_for_breakeven / 100 if entry_price_for_breakeven > 0 else 0
 
-        # Breakeven = Strike + Premium Paid Per Share
+        # Breakeven = Strike + Premium Paid Per Share (using ask price if configured)
         breakeven = float(strike) + cost_per_share
 
         # Profit targets
@@ -494,12 +506,24 @@ def api_position_detail(ticker, strike, expiration):
         days_held = pos.get('Days_Held')
         days_to_expiration = pos.get('DTE')
 
+        # Calculate bid/ask spread
+        entry_spread = entry_ask - entry_bid if entry_ask > 0 and entry_bid > 0 else 0
+        entry_spread_pct = (entry_spread / entry_mid * 100) if entry_mid > 0 else 0
+
         return jsonify({
             "success": True,
             "position": pos,
             "analysis": {
-                # Pricing
-                "entry_option_price": entry_price,
+                # Entry Pricing (Bid/Ask/Mid)
+                "entry_bid": entry_bid,
+                "entry_ask": entry_ask,
+                "entry_mid": entry_mid,
+                "entry_spread": entry_spread,
+                "entry_spread_pct": entry_spread_pct,
+                "entry_price_used": entry_price_for_breakeven,  # Which price was used for breakeven
+                "use_ask_for_entry": use_ask_for_entry,  # Config setting
+
+                # Current Pricing
                 "current_option_price": current_option_price,
                 "current_stock_price": current_stock_price,
                 "strike_price": float(strike),

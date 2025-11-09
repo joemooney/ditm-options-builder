@@ -322,7 +322,10 @@ class RecommendationTracker:
                 "Status": rec["status"],
                 "Days_Held": days_held,
                 "DTE": dte,
-                "Entry_Price": rec["premium_mid"],
+                "Entry_Price": rec["premium_mid"],  # Still use mid for display consistency
+                "Entry_Bid": rec["premium_bid"],     # Store bid for spread analysis
+                "Entry_Ask": rec["premium_ask"],     # Store ask for realistic breakeven
+                "Entry_Mid": rec["premium_mid"],     # Store mid for reference
                 "Current_Price": current_price,
                 "Contracts": rec["contracts_recommended"],
                 "Total_Cost": rec["total_cost"],
