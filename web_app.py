@@ -1,0 +1,309 @@
+#!/usr/bin/env python3
+"""
+DITM Options Portfolio Builder - Web Interface
+Professional web application for options analysis and portfolio management.
+"""
+import os
+import json
+from datetime import datetime
+from pathlib import Path
+from flask import Flask, render_template, request, jsonify, send_from_directory
+from dotenv import load_dotenv
+import markdown
+
+from ditm import (
+    get_schwab_client, build_ditm_portfolio, find_ditm_calls,
+    MIN_DELTA, MAX_DELTA, MIN_INTRINSIC_PCT, MIN_DTE, MAX_IV, MAX_SPREAD_PCT, MIN_OI
+)
+from recommendation_tracker import RecommendationTracker
+from port_manager import PortManager
+
+load_dotenv()
+
+app = Flask(__name__)
+app.config['SECRET_KEY'] = os.urandom(24)
+
+# Global tracker instance
+tracker = RecommendationTracker()
+
+# Configuration file for user preferences
+CONFIG_FILE = Path("./web_config.json")
+
+
+def load_config():
+    """Load user configuration."""
+    if CONFIG_FILE.exists():
+        with open(CONFIG_FILE, 'r') as f:
+            return json.load(f)
+    return {
+        "tickers": ["AAPL", "MSFT", "GOOGL", "JNJ", "JPM"],
+        "target_capital": 50000,
+        "filters": {
+            "MIN_DELTA": MIN_DELTA,
+            "MAX_DELTA": MAX_DELTA,
+            "MIN_INTRINSIC_PCT": MIN_INTRINSIC_PCT,
+            "MIN_DTE": MIN_DTE,
+            "MAX_IV": MAX_IV,
+            "MAX_SPREAD_PCT": MAX_SPREAD_PCT,
+            "MIN_OI": MIN_OI
+        }
+    }
+
+
+def save_config(config):
+    """Save user configuration."""
+    with open(CONFIG_FILE, 'w') as f:
+        json.dump(config, f, indent=2)
+
+
+@app.route('/')
+def index():
+    """Main dashboard."""
+    return render_template('index.html')
+
+
+@app.route('/api/config', methods=['GET', 'POST'])
+def api_config():
+    """Get or update configuration."""
+    if request.method == 'POST':
+        config = request.json
+        save_config(config)
+        return jsonify({"success": True, "message": "Configuration saved"})
+
+    return jsonify(load_config())
+
+
+@app.route('/api/scan', methods=['POST'])
+def api_scan():
+    """Run options scan."""
+    try:
+        data = request.json
+        tickers = data.get('tickers', [])
+        target_capital = data.get('target_capital', 50000)
+
+        if not tickers:
+            return jsonify({"success": False, "error": "No tickers provided"}), 400
+
+        # Initialize Schwab client
+        client = get_schwab_client()
+
+        # Run scan with tracking
+        portfolio_df = build_ditm_portfolio(
+            client,
+            tickers,
+            target_capital=target_capital,
+            tracker=tracker,
+            save_recommendations=True
+        )
+
+        if portfolio_df.empty:
+            return jsonify({
+                "success": False,
+                "message": "No qualifying options found"
+            })
+
+        # Convert to JSON-serializable format
+        portfolio_dict = portfolio_df.to_dict('records')
+
+        # Calculate summary stats
+        summary = {
+            "total_invested": float(portfolio_df["Total Cost"].sum()),
+            "total_equiv_shares": float(portfolio_df["Equiv Shares"].sum()),
+            "num_positions": len(portfolio_df),
+            "scan_date": datetime.now().isoformat()
+        }
+
+        return jsonify({
+            "success": True,
+            "portfolio": portfolio_dict,
+            "summary": summary
+        })
+
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route('/api/performance', methods=['GET'])
+def api_performance():
+    """Get performance data."""
+    try:
+        update = request.args.get('update', 'false').lower() == 'true'
+
+        client = None
+        if update:
+            client = get_schwab_client()
+
+        # Get performance summary
+        df = tracker.get_performance_summary()
+
+        if df.empty:
+            return jsonify({
+                "success": True,
+                "message": "No performance data available",
+                "data": []
+            })
+
+        # Calculate risk metrics
+        risk_metrics = tracker.calculate_risk_metrics()
+
+        # Portfolio summary
+        total_invested = float(df["Total_Cost"].sum())
+        current_value = float(df["Current_Value"].sum())
+        total_pnl = float(df["P&L"].sum())
+
+        summary = {
+            "total_recommendations": len(df),
+            "open_positions": len(df[df["Status"] == "open"]),
+            "expired_positions": len(df[df["Status"] == "expired"]),
+            "total_invested": total_invested,
+            "current_value": current_value,
+            "total_pnl": total_pnl,
+            "total_pnl_pct": (total_pnl / total_invested * 100) if total_invested > 0 else 0,
+            "win_rate": (len(df[df["P&L"] > 0]) / len(df) * 100) if len(df) > 0 else 0,
+            "avg_return": float(df["P&L_%"].mean()),
+            "avg_days_held": float(df["Days_Held"].mean())
+        }
+
+        return jsonify({
+            "success": True,
+            "summary": summary,
+            "risk_metrics": risk_metrics,
+            "positions": df.to_dict('records')
+        })
+
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route('/api/ticker/analyze/<ticker>', methods=['GET'])
+def api_analyze_ticker(ticker):
+    """Analyze a single ticker for DITM opportunities."""
+    try:
+        client = get_schwab_client()
+
+        candidates = find_ditm_calls(client, ticker.upper())
+
+        if candidates.empty:
+            return jsonify({
+                "success": True,
+                "ticker": ticker.upper(),
+                "message": "No qualifying DITM calls found",
+                "candidates": []
+            })
+
+        return jsonify({
+            "success": True,
+            "ticker": ticker.upper(),
+            "candidates": candidates.head(10).to_dict('records')
+        })
+
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route('/api/docs/<doc_name>')
+def api_docs(doc_name):
+    """Serve documentation as HTML."""
+    try:
+        # Map doc names to files
+        doc_files = {
+            "user_guide": "USER_GUIDE.md",
+            "schwab_setup": "SCHWAB_SETUP.md",
+            "tracking_guide": "TRACKING_GUIDE.md",
+            "readme": "README.md"
+        }
+
+        if doc_name not in doc_files:
+            return jsonify({"success": False, "error": "Document not found"}), 404
+
+        doc_path = Path(doc_files[doc_name])
+        if not doc_path.exists():
+            return jsonify({"success": False, "error": "Document file not found"}), 404
+
+        # Read and convert markdown to HTML
+        with open(doc_path, 'r') as f:
+            md_content = f.read()
+
+        html_content = markdown.markdown(
+            md_content,
+            extensions=['tables', 'fenced_code', 'toc']
+        )
+
+        return jsonify({
+            "success": True,
+            "title": doc_name.replace('_', ' ').title(),
+            "content": html_content
+        })
+
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route('/api/health')
+def api_health():
+    """Health check endpoint."""
+    try:
+        # Check if Schwab client can be initialized
+        client = get_schwab_client()
+        schwab_status = "connected"
+    except Exception as e:
+        schwab_status = f"error: {str(e)}"
+
+    return jsonify({
+        "status": "healthy",
+        "schwab": schwab_status,
+        "database": "connected" if tracker.db_path.exists() else "not_found",
+        "timestamp": datetime.now().isoformat()
+    })
+
+
+# Serve static files
+@app.route('/static/<path:filename>')
+def static_files(filename):
+    """Serve static files."""
+    return send_from_directory('static', filename)
+
+
+if __name__ == '__main__':
+    # Create necessary directories
+    Path("templates").mkdir(exist_ok=True)
+    Path("static/css").mkdir(parents=True, exist_ok=True)
+    Path("static/js").mkdir(parents=True, exist_ok=True)
+
+    # Get port from port manager
+    port_manager = PortManager()
+
+    # Register this application if not already registered
+    app_name = "ditm"
+    port = port_manager.get_port(app_name)
+
+    if port is None:
+        # Register with default port
+        port = 5010
+        try:
+            port_manager.register_port(
+                app_name,
+                port,
+                "DITM Options Portfolio Builder - Web Interface"
+            )
+            print(f"✓ Registered '{app_name}' on port {port} in global registry")
+        except ValueError as e:
+            # Port conflict - find available port
+            print(f"⚠ Port {port} conflict: {e}")
+            port = port_manager.find_available_port(5000, 6000)
+            port_manager.register_port(
+                app_name,
+                port,
+                "DITM Options Portfolio Builder - Web Interface"
+            )
+            print(f"✓ Registered '{app_name}' on port {port} (auto-assigned)")
+
+    print("=" * 70)
+    print("DITM Options Portfolio Builder - Web Interface")
+    print("=" * 70)
+    print(f"Starting server at http://localhost:{port}")
+    print(f"Port assignment managed via: {port_manager.registry_path}")
+    print("Press Ctrl+C to stop")
+    print("=" * 70)
+
+    app.run(debug=True, host='0.0.0.0', port=port)
