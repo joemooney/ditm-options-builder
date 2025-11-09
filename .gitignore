@@ -47,3 +47,4 @@ ditm_portfolio_*.csv
 test_simple.py
 ditm_yfinance_backup.py
 xx.py
+market_data_cache/
