@@ -7,6 +7,8 @@
     --danger-color: #ef4444;
     --warning-color: #f59e0b;
     --info-color: #60a5fa;
+    --gold-color: #fbbf24;
+    --gold-hover: #f59e0b;
 
     --radius: 0.5rem;
     --radius-lg: 0.75rem;
@@ -85,7 +87,7 @@ body {
 .nav-brand {
     font-size: 1.5rem;
     font-weight: 700;
-    color: var(--primary-color);
+    color: var(--gold-color);
     display: flex;
     align-items: center;
     gap: 0.5rem;
@@ -177,7 +179,7 @@ body {
 
 .page-header h1 {
     font-size: 2rem;
-    color: var(--text-primary);
+    color: var(--gold-color);
     display: flex;
     align-items: center;
     gap: 0.75rem;
@@ -329,14 +331,14 @@ body {
 
 .btn-outline {
     background: transparent;
-    border: 1px solid var(--border-color);
-    color: var(--text-primary);
+    border: 1px solid var(--gold-color);
+    color: var(--gold-color);
 }
 
 .btn-outline:hover {
-    background: var(--bg-tertiary);
-    border-color: var(--primary-color);
-    color: var(--primary-color);
+    background: var(--gold-color);
+    border-color: var(--gold-color);
+    color: var(--bg-primary);
 }
 
 .btn-lg {
@@ -559,6 +561,18 @@ body {
 .doc-content th {
     background: var(--bg-secondary);
     font-weight: 600;
+}
+
+.doc-content a {
+    color: var(--gold-color);
+    text-decoration: none;
+    border-bottom: 1px solid transparent;
+    transition: var(--transition);
+}
+
+.doc-content a:hover {
+    color: var(--gold-hover);
+    border-bottom-color: var(--gold-hover);
 }
 
 /* Loading Overlay */
