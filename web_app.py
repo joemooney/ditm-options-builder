@@ -337,14 +337,18 @@ def api_position_detail(ticker, strike, expiration):
 
         pos = position.iloc[0].to_dict()
 
-        # Calculate additional metrics
-        current_price = pos.get('Current_Stock_Price', 0)
-        option_price = pos.get('Current_Value', 0) / 100  # Per share
-        total_cost = pos['Total_Cost']
-        contracts = pos.get('Contracts', 1)
+        # Calculate additional metrics with null safety
+        current_price = pos.get('Current_Stock_Price') or 0
+        current_value = pos.get('Current_Value') or 0
+        option_price = current_value / 100 if current_value else 0  # Per share
+        total_cost = pos.get('Total_Cost') or 0
+        contracts = pos.get('Contracts') or 1
 
         # Breakeven calculation
-        cost_per_share = total_cost / (contracts * 100)
+        if total_cost > 0 and contracts > 0:
+            cost_per_share = total_cost / (contracts * 100)
+        else:
+            cost_per_share = 0
         breakeven = float(strike) + cost_per_share
 
         # Profit targets
@@ -375,6 +379,10 @@ def api_position_detail(ticker, strike, expiration):
         distance_to_breakeven = current_price - breakeven
         distance_to_breakeven_pct = (distance_to_breakeven / breakeven * 100) if breakeven > 0 else 0
 
+        # Safe conversions for response
+        days_held = pos.get('Days_Held')
+        days_to_expiration = pos.get('DTE')
+
         return jsonify({
             "success": True,
             "position": pos,
@@ -385,10 +393,10 @@ def api_position_detail(ticker, strike, expiration):
                 "distance_to_breakeven": distance_to_breakeven,
                 "distance_to_breakeven_pct": distance_to_breakeven_pct,
                 "exit_targets": exit_targets,
-                "contracts": contracts,
+                "contracts": int(contracts),
                 "intrinsic_value": max(0, current_price - float(strike)),
-                "days_held": pos.get('Days_Held', 0),
-                "days_to_expiration": pos.get('DTE', 0)
+                "days_held": int(days_held) if days_held is not None else 0,
+                "days_to_expiration": int(days_to_expiration) if days_to_expiration is not None else 0
             }
         })
 
