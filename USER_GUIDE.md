@@ -158,6 +158,47 @@ The **extra premium** above intrinsic value, representing potential future profi
 
 **Time decay**: This value decreases as expiration approaches.
 
+#### Understanding Time Value as Insurance
+
+When you pay time value above intrinsic value, you're essentially **buying insurance** against catastrophic loss compared to owning the stock outright.
+
+**Example Scenario**:
+```
+Stock Price: $225
+Strike Price: $200
+Intrinsic Value: $25 ($225 - $200)
+Premium (Ask): $28
+Time Value: $3 ($28 - $25)
+```
+
+**What that $3 time value represents**:
+
+If you bought the stock at $225:
+- **Maximum loss**: $225 per share (stock goes to $0)
+- **Total risk**: 100 shares × $225 = $22,500
+
+If you bought the DITM call at $28:
+- **Maximum loss**: $28 per share (option expires worthless)
+- **Total risk**: 100 shares × $28 = $2,800
+
+**The insurance benefit**:
+- Stock ownership risk: $22,500
+- Option ownership risk: $2,800
+- **Insurance value**: $19,700 of downside protection
+
+The $3 time value you pay is the "insurance premium" for this protection. Even though you have $25 of intrinsic value, you're only risking $28 total (not $225), meaning:
+
+**You have limited your catastrophic downside** to $2,800 instead of $22,500, while maintaining similar upside potential through the high delta (0.85-0.95).
+
+**This is the hidden value of DITM options**:
+- The intrinsic value ($25) is the "real value" you control
+- The time value ($3) is the cost of insurance against losing more than $28/share
+- Together, they give you leveraged upside with defined downside risk
+
+**In other words**: If the stock crashes from $225 to $50, stock holders lose $175/share ($17,500 total), but you only lose $28/share ($2,800 total). The $3 time value premium bought you protection against a $19,700 catastrophic loss.
+
+This is why DITM options are considered **conservative leverage** - you're paying a small premium for significant downside protection while maintaining most of the upside.
+
 ### Intrinsic % (Intrinsic Value Percentage)
 **Critical metric!** Percentage of the premium that is intrinsic value.
 
@@ -218,6 +259,46 @@ The difference between the highest price a buyer will pay (bid) and lowest price
 **Why it matters**:
 - Wide spreads = **Hidden cost** when trading
 - This tool requires spreads < 2% (very liquid)
+
+#### Bid/Ask Impact on Breakeven
+
+**Important**: In real trading, you don't pay the mid price!
+
+When you **buy** an option:
+- You pay the **ask price** ($28.20 in the example)
+- Not the mid price ($28.00)
+- This costs you an extra $0.20 per share
+
+When you **sell** an option:
+- You receive the **bid price** ($27.80)
+- Not the mid price ($28.00)
+- You get $0.20 less per share
+
+**Impact on Breakeven Calculation**:
+
+Using **mid price** (optimistic):
+```
+Strike: $200
+Premium (mid): $28.00
+Breakeven: $200 + $28.00 = $228.00
+```
+
+Using **ask price** (realistic):
+```
+Strike: $200
+Premium (ask): $28.20
+Breakeven: $200 + $28.20 = $228.20
+```
+
+**The $0.20 difference matters!** Over 100 shares per contract, that's $20 per contract, or $80 for 4 contracts.
+
+**This tool's approach**:
+- By default, uses **ask price** for entry breakeven calculations (realistic)
+- Displays bid/ask/mid in position analysis
+- Shows spread percentage so you understand the cost
+- Configurable via `use_ask_for_entry` setting in web_config.json
+
+**Recommendation**: Always use ask price for planning your breakeven, as that's what you'll actually pay in practice.
 
 ### Cost Per Share
 **Key metric for comparison!** The effective price you're paying per share of stock exposure.
