@@ -16,6 +16,10 @@ from ditm import (
     MIN_DELTA, MAX_DELTA, MIN_INTRINSIC_PCT, MIN_DTE, MAX_IV, MAX_SPREAD_PCT, MIN_OI
 )
 from recommendation_tracker import RecommendationTracker
+
+# Import PortManager from global installation
+import sys
+sys.path.insert(0, '/home/joe/port_manager')
 from port_manager import PortManager
 
 load_dotenv()
