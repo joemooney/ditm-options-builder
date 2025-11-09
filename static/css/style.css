@@ -373,6 +373,11 @@ body {
     margin-top: 0.25rem;
 }
 
+small {
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+}
+
 .form-control {
     width: 100%;
     padding: 0.75rem 1rem;
@@ -381,6 +386,7 @@ body {
     font-size: 0.875rem;
     transition: var(--transition);
     background: var(--bg-primary);
+    color: var(--text-primary);
 }
 
 .form-control:focus {
