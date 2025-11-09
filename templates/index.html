@@ -248,7 +248,11 @@
                 <!-- Ticker Management -->
                 <div class="card">
                     <div class="card-header">
-                        <h2><i class="fas fa-list"></i> Ticker Watchlist</h2>
+                        <h2>
+                            <i class="fas fa-list"></i> Ticker Watchlist
+                            <i class="fas fa-info-circle tooltip-icon"
+                               data-tooltip="Manage your stock watchlist. These tickers will be used for scans and are saved in web_config.json."></i>
+                        </h2>
                     </div>
                     <div class="card-body">
                         <div class="form-group">
@@ -277,52 +281,85 @@
 
                 <div class="card">
                     <div class="card-header">
-                        <h2><i class="fas fa-sliders-h"></i> Filter Parameters</h2>
+                        <div class="card-header-with-help">
+                            <h2><i class="fas fa-sliders-h"></i> Filter Parameters</h2>
+                            <button type="button" class="btn btn-outline btn-sm" onclick="loadDoc('user_guide')">
+                                <i class="fas fa-question-circle"></i> View User Guide
+                            </button>
+                        </div>
                     </div>
                     <div class="card-body">
                         <form id="settings-form">
                             <div class="settings-grid">
                                 <div class="form-group">
-                                    <label>MIN_DELTA</label>
+                                    <label>
+                                        MIN_DELTA
+                                        <i class="fas fa-info-circle tooltip-icon"
+                                           data-tooltip="Minimum delta (0.80 = option moves 80¢ per $1 stock move). Higher = more conservative, stock-like behavior."></i>
+                                    </label>
                                     <input type="number" id="setting-min-delta" class="form-control"
                                            step="0.01" min="0" max="1" value="0.80">
-                                    <small>Minimum option delta (0.80-0.95 recommended)</small>
+                                    <small>Option must move at least this much with the stock (0.80-0.95 recommended)</small>
                                 </div>
                                 <div class="form-group">
-                                    <label>MAX_DELTA</label>
+                                    <label>
+                                        MAX_DELTA
+                                        <i class="fas fa-info-circle tooltip-icon"
+                                           data-tooltip="Maximum delta (0.95 avoids extremely deep ITM). Prevents tying up too much capital."></i>
+                                    </label>
                                     <input type="number" id="setting-max-delta" class="form-control"
                                            step="0.01" min="0" max="1" value="0.95">
-                                    <small>Maximum option delta</small>
+                                    <small>Avoid options too deep in the money (limits capital inefficiency)</small>
                                 </div>
                                 <div class="form-group">
-                                    <label>MIN_INTRINSIC_PCT</label>
+                                    <label>
+                                        MIN_INTRINSIC_PCT
+                                        <i class="fas fa-info-circle tooltip-icon"
+                                           data-tooltip="Minimum intrinsic value % (85% = most premium is 'real value'). Protects against time decay. Higher = more conservative."></i>
+                                    </label>
                                     <input type="number" id="setting-min-intrinsic" class="form-control"
                                            step="0.01" min="0" max="1" value="0.85">
-                                    <small>Minimum intrinsic value %</small>
+                                    <small>At least 85% of premium must be intrinsic value (reduces time decay risk)</small>
                                 </div>
                                 <div class="form-group">
-                                    <label>MIN_DTE</label>
+                                    <label>
+                                        MIN_DTE
+                                        <i class="fas fa-info-circle tooltip-icon"
+                                           data-tooltip="Minimum days to expiration (90 days = 3 months). Avoids accelerated time decay. More days = safer."></i>
+                                    </label>
                                     <input type="number" id="setting-min-dte" class="form-control"
                                            step="1" min="0" value="90">
-                                    <small>Minimum days to expiration</small>
+                                    <small>Must have at least 90 days until expiration (180-365 for long-term)</small>
                                 </div>
                                 <div class="form-group">
-                                    <label>MAX_IV</label>
+                                    <label>
+                                        MAX_IV
+                                        <i class="fas fa-info-circle tooltip-icon"
+                                           data-tooltip="Maximum implied volatility (30% = moderate). Rejects highly volatile stocks. Lower = more stable stocks."></i>
+                                    </label>
                                     <input type="number" id="setting-max-iv" class="form-control"
                                            step="0.01" min="0" max="2" value="0.30">
-                                    <small>Maximum implied volatility</small>
+                                    <small>Avoid highly volatile stocks (0.30 = 30% max volatility)</small>
                                 </div>
                                 <div class="form-group">
-                                    <label>MAX_SPREAD_PCT</label>
+                                    <label>
+                                        MAX_SPREAD_PCT
+                                        <i class="fas fa-info-circle tooltip-icon"
+                                           data-tooltip="Maximum bid-ask spread % (2% max). Ensures liquidity and minimizes trading costs. Lower = more liquid."></i>
+                                    </label>
                                     <input type="number" id="setting-max-spread" class="form-control"
                                            step="0.001" min="0" max="0.1" value="0.02">
-                                    <small>Maximum bid-ask spread %</small>
+                                    <small>Spread can't exceed 2% of option price (ensures liquidity)</small>
                                 </div>
                                 <div class="form-group">
-                                    <label>MIN_OI</label>
+                                    <label>
+                                        MIN_OI
+                                        <i class="fas fa-info-circle tooltip-icon"
+                                           data-tooltip="Minimum open interest (500 contracts). Higher = easier to buy/sell, tighter spreads. 1000+ for large positions."></i>
+                                    </label>
                                     <input type="number" id="setting-min-oi" class="form-control"
                                            step="50" min="0" value="500">
-                                    <small>Minimum open interest</small>
+                                    <small>At least 500 open contracts (ensures reasonable liquidity)</small>
                                 </div>
                             </div>
 
