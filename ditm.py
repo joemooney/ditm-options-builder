@@ -130,6 +130,76 @@ def bs_call_delta(S, K, T, r, sigma):
     return norm.cdf(d1)
 
 # -------------------------------------------------
+# ACCOUNT POSITIONS
+# -------------------------------------------------
+def get_account_positions(client) -> pd.DataFrame:
+    """
+    Fetch actual option positions from Schwab account.
+    Returns DataFrame with ticker, strike, expiration, quantity.
+    """
+    try:
+        # Get all accounts with positions
+        response = client.get_accounts(fields=schwab.client.Client.Account.Fields.POSITIONS)
+
+        if response.status_code != 200:
+            print(f"Failed to fetch account positions: HTTP {response.status_code}")
+            return pd.DataFrame()
+
+        accounts_data = response.json()
+
+        positions = []
+        for account in accounts_data:
+            if 'positions' not in account['securitiesAccount']:
+                continue
+
+            for position in account['securitiesAccount']['positions']:
+                instrument = position.get('instrument', {})
+
+                # Only process option positions
+                if instrument.get('assetType') != 'OPTION':
+                    continue
+
+                # Only process call options
+                option_type = instrument.get('putCall')
+                if option_type != 'CALL':
+                    continue
+
+                # Parse option symbol (format: AAPL  250117C00225000)
+                symbol = instrument.get('symbol', '')
+                underlying = instrument.get('underlyingSymbol', '')
+
+                # Extract details
+                quantity = position.get('longQuantity', 0) - position.get('shortQuantity', 0)
+
+                if quantity <= 0:
+                    continue
+
+                positions.append({
+                    'Ticker': underlying,
+                    'Symbol': symbol,
+                    'Strike': instrument.get('strikePrice', 0),
+                    'Expiration': instrument.get('expirationDate', ''),
+                    'Quantity': int(quantity),
+                    'Description': instrument.get('description', ''),
+                    'Average_Price': position.get('averagePrice', 0),
+                    'Current_Value': position.get('marketValue', 0),
+                    'Unrealized_PL': position.get('currentDayProfitLoss', 0)
+                })
+
+        df = pd.DataFrame(positions)
+
+        # Convert expiration date format from milliseconds to YYYY-MM-DD
+        if not df.empty and 'Expiration' in df.columns:
+            # Schwab returns dates as milliseconds since epoch
+            df['Expiration'] = pd.to_datetime(df['Expiration'], unit='ms').dt.strftime('%Y-%m-%d')
+
+        return df
+
+    except Exception as e:
+        print(f"Error fetching account positions: {e}")
+        return pd.DataFrame()
+
+# -------------------------------------------------
 # SCHWAB CLIENT INITIALIZATION
 # -------------------------------------------------
 def get_schwab_client():

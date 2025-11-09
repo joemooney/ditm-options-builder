@@ -128,7 +128,7 @@ async function loadDashboard() {
 
         if (data.success && data.summary) {
             updateDashboardStats(data.summary);
-            updateOpenPositions(data.positions);
+            updateActiveAndRecommendedPositions(data.positions);
         }
     } catch (error) {
         console.error('Error loading dashboard:', error);
@@ -148,42 +148,71 @@ function updateDashboardStats(summary) {
     document.getElementById('stat-winrate').textContent = formatPercent(summary.win_rate);
 }
 
-// Update open positions table
-function updateOpenPositions(positions) {
-    const container = document.getElementById('open-positions-table');
-
+// Update active and recommended positions tables
+function updateActiveAndRecommendedPositions(positions) {
     if (!positions || positions.length === 0) {
-        container.innerHTML = '<p class="text-muted">No open positions</p>';
+        document.getElementById('active-positions-table').innerHTML = '<p class="text-muted">No active positions</p>';
+        document.getElementById('recommended-positions-table').innerHTML = '<p class="text-muted">No recommendations</p>';
         return;
     }
 
-    const openPositions = positions.filter(p => p.Status === 'open');
+    // Filter positions
+    const activePositions = positions.filter(p => p.Status === 'open' && p.Is_Active);
+    const recommendedPositions = positions.filter(p => p.Status === 'open' && !p.Is_Active);
 
-    if (openPositions.length === 0) {
-        container.innerHTML = '<p class="text-muted">No open positions</p>';
-        return;
+    // Update active positions
+    const activeContainer = document.getElementById('active-positions-table');
+    if (activePositions.length === 0) {
+        activeContainer.innerHTML = '<p class="text-muted">No active positions in your account</p>';
+    } else {
+        let html = '<table class="table"><thead><tr>';
+        html += '<th>Ticker</th><th>Strike</th><th>Expiration</th><th>DTE</th>';
+        html += '<th>Cost</th><th>Value</th><th>P&L</th>';
+        html += '</tr></thead><tbody>';
+
+        activePositions.forEach(pos => {
+            const pnlClass = pos['P&L'] >= 0 ? 'positive' : 'negative';
+            html += `<tr class="clickable-row" onclick="showPositionDetail('${pos.Ticker}', '${pos.Strike}', '${pos.Expiration}')" style="cursor: pointer;">`;
+            html += `<td><strong>${pos.Ticker}</strong></td>`;
+            html += `<td>${pos.Strike}</td>`;
+            html += `<td>${pos.Expiration}</td>`;
+            html += `<td>${pos.DTE || 0}</td>`;
+            html += `<td>${formatCurrency(pos.Total_Cost)}</td>`;
+            html += `<td>${formatCurrency(pos.Current_Value)}</td>`;
+            html += `<td class="${pnlClass}">${formatCurrency(pos['P&L'])} (${formatPercent(pos['P&L_%'])})</td>`;
+            html += '</tr>';
+        });
+
+        html += '</tbody></table>';
+        activeContainer.innerHTML = html;
     }
 
-    let html = '<table class="table"><thead><tr>';
-    html += '<th>Ticker</th><th>Strike</th><th>Expiration</th>';
-    html += '<th>Days Held</th><th>Cost</th><th>Value</th><th>P&L</th>';
-    html += '</tr></thead><tbody>';
+    // Update recommended positions
+    const recommendedContainer = document.getElementById('recommended-positions-table');
+    if (recommendedPositions.length === 0) {
+        recommendedContainer.innerHTML = '<p class="text-muted">No new recommendations. Run a scan to find opportunities!</p>';
+    } else {
+        let html = '<table class="table"><thead><tr>';
+        html += '<th>Ticker</th><th>Strike</th><th>Expiration</th><th>DTE</th>';
+        html += '<th>Cost/Share</th><th>Delta</th><th>IV</th><th>Score</th>';
+        html += '</tr></thead><tbody>';
 
-    openPositions.slice(0, 10).forEach(pos => {
-        const pnlClass = pos['P&L'] >= 0 ? 'positive' : 'negative';
-        html += `<tr class="clickable-row" onclick="showPositionDetail('${pos.Ticker}', '${pos.Strike}', '${pos.Expiration}')" style="cursor: pointer;">`;
-        html += `<td><strong>${pos.Ticker}</strong></td>`;
-        html += `<td>${pos.Strike}</td>`;
-        html += `<td>${pos.Expiration}</td>`;
-        html += `<td>${pos.Days_Held}</td>`;
-        html += `<td>${formatCurrency(pos.Total_Cost)}</td>`;
-        html += `<td>${formatCurrency(pos.Current_Value)}</td>`;
-        html += `<td class="${pnlClass}">${formatCurrency(pos['P&L'])} (${formatPercent(pos['P&L_%'])})</td>`;
-        html += '</tr>';
-    });
+        recommendedPositions.slice(0, 10).forEach(pos => {
+            html += `<tr class="clickable-row" onclick="showPositionDetail('${pos.Ticker}', '${pos.Strike}', '${pos.Expiration}')" style="cursor: pointer;">`;
+            html += `<td><strong>${pos.Ticker}</strong></td>`;
+            html += `<td>${pos.Strike}</td>`;
+            html += `<td>${pos.Expiration}</td>`;
+            html += `<td>${pos.DTE || 0}</td>`;
+            html += `<td>${formatCurrency(pos.Cost_Share || pos['Cost/Share'] || 0)}</td>`;
+            html += `<td>${formatPercent(pos.Delta_Entry * 100)}</td>`;
+            html += `<td>${formatPercent((pos.IV_Entry || 0) * 100)}</td>`;
+            html += `<td>${(pos.Score || 0).toFixed(3)}</td>`;
+            html += '</tr>';
+        });
 
-    html += '</tbody></table>';
-    container.innerHTML = html;
+        html += '</tbody></table>';
+        recommendedContainer.innerHTML = html;
+    }
 }
 
 // Handle ticker input

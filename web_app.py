@@ -14,7 +14,7 @@ import pandas as pd
 import numpy as np
 
 from ditm import (
-    get_schwab_client, build_ditm_portfolio, find_ditm_calls,
+    get_schwab_client, build_ditm_portfolio, find_ditm_calls, get_account_positions,
     MIN_DELTA, MAX_DELTA, MIN_INTRINSIC_PCT, MIN_DTE, MAX_IV, MAX_SPREAD_PCT, MIN_OI
 )
 from recommendation_tracker import RecommendationTracker
@@ -129,9 +129,45 @@ def api_scan():
         return jsonify({"success": False, "error": str(e)}), 500
 
 
+@app.route('/api/positions/active', methods=['GET'])
+def api_active_positions():
+    """Get actual positions from Schwab account."""
+    try:
+        client = get_schwab_client()
+        positions_df = get_account_positions(client)
+
+        if positions_df.empty:
+            return jsonify({
+                "success": True,
+                "message": "No active option positions found",
+                "positions": []
+            })
+
+        # Convert to JSON-serializable format
+        positions = positions_df.to_dict('records')
+
+        # Convert numpy/pandas types to Python native types
+        for pos in positions:
+            for key, value in pos.items():
+                if pd.isna(value):
+                    pos[key] = None
+                elif isinstance(value, (np.integer, np.int64)):
+                    pos[key] = int(value)
+                elif isinstance(value, (np.floating, np.float64)):
+                    pos[key] = float(value)
+
+        return jsonify({
+            "success": True,
+            "positions": positions
+        })
+
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
 @app.route('/api/performance', methods=['GET'])
 def api_performance():
-    """Get performance data."""
+    """Get performance data with active position matching."""
     try:
         update = request.args.get('update', 'false').lower() == 'true'
 
@@ -139,8 +175,24 @@ def api_performance():
         if update:
             client = get_schwab_client()
 
-        # Get performance summary
+        # Get performance summary (all recommendations)
         df = tracker.get_performance_summary()
+
+        # Get active positions from account
+        active_df = get_account_positions(client if client else get_schwab_client())
+
+        # Add is_active flag by matching with account positions
+        if not df.empty and not active_df.empty:
+            df['Is_Active'] = df.apply(
+                lambda row: any(
+                    (active_df['Ticker'] == row['Ticker']) &
+                    (abs(active_df['Strike'] - row['Strike']) < 0.01) &
+                    (active_df['Expiration'] == row['Expiration'])
+                ),
+                axis=1
+            )
+        else:
+            df['Is_Active'] = False
 
         if df.empty:
             return jsonify({
@@ -181,9 +233,14 @@ def api_performance():
         avg_return = df["P&L_%"].mean()
         avg_days = df["Days_Held"].mean()
 
+        # Separate active vs recommended counts
+        active_positions = df[df["Is_Active"] == True]
+        recommended_only = df[(df["Status"] == "open") & (df["Is_Active"] == False)]
+
         summary = {
             "total_recommendations": len(df),
-            "open_positions": len(df[df["Status"] == "open"]),
+            "active_positions": len(active_positions),
+            "recommended_only": len(recommended_only),
             "expired_positions": len(df[df["Status"] == "expired"]),
             "total_invested": total_invested,
             "current_value": current_value,
