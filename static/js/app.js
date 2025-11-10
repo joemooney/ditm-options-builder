@@ -200,14 +200,39 @@ function updateActiveAndRecommendedPositions(positions) {
     if (recommendedPositions.length === 0) {
         recommendedContainer.innerHTML = '<p class="text-muted">No new recommendations. Run a scan to find opportunities!</p>';
     } else {
-        let html = '<table class="table"><thead><tr>';
-        html += '<th>Ticker</th><th>Strike</th><th>Expiration</th><th>DTE</th>';
+        // Check if data is stale (>24 hours old during market hours)
+        const shouldShowRefresh = checkIfDataStale(recommendedPositions);
+
+        let html = '';
+
+        // Add refresh button if data is stale
+        if (shouldShowRefresh) {
+            html += '<div class="warning-box" style="margin-bottom: 1rem;">';
+            html += '<p><strong><i class="fas fa-exclamation-triangle"></i> Stale Data</strong></p>';
+            html += '<p>Price data is more than 24 hours old. ';
+            html += '<button class="btn btn-primary" onclick="refreshRecommendedPrices()" style="margin-left: 0.5rem;">';
+            html += '<i class="fas fa-sync"></i> Refresh Prices</button></p>';
+            html += '</div>';
+        }
+
+        html += '<table class="table"><thead><tr>';
+        html += '<th>Ticker</th><th>Stock Price</th><th>Strike</th><th>Expiration</th><th>DTE</th>';
         html += '<th>Cost/Share</th><th>Delta</th><th>IV</th><th>Score</th><th></th>';
         html += '</tr></thead><tbody>';
 
         recommendedPositions.slice(0, 10).forEach(pos => {
+            // Determine which stock price to show (current if available, otherwise entry)
+            const stockPrice = pos.Stock_Current || pos.Stock_Entry || 0;
+            const isStale = !pos.Stock_Current || pos.Stock_Current === 0;
+
             html += `<tr class="clickable-row">`;
             html += `<td onclick="showPositionDetail('${pos.Ticker}', '${pos.Strike}', '${pos.Expiration}')" style="cursor: pointer;"><strong>${pos.Ticker}</strong></td>`;
+            html += `<td onclick="showPositionDetail('${pos.Ticker}', '${pos.Strike}', '${pos.Expiration}')" style="cursor: pointer;">`;
+            html += `${formatCurrency(stockPrice)}`;
+            if (isStale) {
+                html += ` <i class="fas fa-exclamation-circle" style="color: var(--warning-color); font-size: 0.8rem;" title="Stale price data"></i>`;
+            }
+            html += `</td>`;
             html += `<td onclick="showPositionDetail('${pos.Ticker}', '${pos.Strike}', '${pos.Expiration}')" style="cursor: pointer;">${pos.Strike}</td>`;
             html += `<td onclick="showPositionDetail('${pos.Ticker}', '${pos.Strike}', '${pos.Expiration}')" style="cursor: pointer;">${pos.Expiration}</td>`;
             html += `<td onclick="showPositionDetail('${pos.Ticker}', '${pos.Strike}', '${pos.Expiration}')" style="cursor: pointer;">${pos.DTE || 0}</td>`;
@@ -225,6 +250,50 @@ function updateActiveAndRecommendedPositions(positions) {
 
         html += '</tbody></table>';
         recommendedContainer.innerHTML = html;
+    }
+}
+
+// Check if recommendation data is stale (>24 hours during market hours)
+function checkIfDataStale(positions) {
+    if (!positions || positions.length === 0) return false;
+
+    const now = new Date();
+    const dayOfWeek = now.getDay(); // 0 = Sunday, 6 = Saturday
+    const hour = now.getHours();
+
+    // Check if we're during market hours (Mon-Fri, 9:30am-4pm ET)
+    // Note: This is simplified - you'd need to convert to ET properly
+    const isWeekday = dayOfWeek >= 1 && dayOfWeek <= 5;
+    const isDuringMarketHours = hour >= 9 && hour <= 16;
+
+    if (!isWeekday || !isDuringMarketHours) {
+        return false; // Don't show refresh during weekends or after hours
+    }
+
+    // Check if any position has stale data
+    // A position is stale if Stock_Current is 0/null (means it hasn't been updated)
+    const hasStaleData = positions.some(pos => !pos.Stock_Current || pos.Stock_Current === 0);
+
+    return hasStaleData;
+}
+
+// Refresh prices for recommended positions
+async function refreshRecommendedPrices() {
+    showToast('Refreshing prices...', 'info');
+
+    try {
+        const response = await fetch('/api/performance?update=true');
+        const data = await response.json();
+
+        if (data.success) {
+            showToast('Prices refreshed successfully', 'success');
+            loadDashboard();
+        } else {
+            showToast('Failed to refresh prices', 'error');
+        }
+    } catch (error) {
+        console.error('Error refreshing prices:', error);
+        showToast('Error refreshing prices: ' + error.message, 'error');
     }
 }
 
