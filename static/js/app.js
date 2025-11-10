@@ -240,7 +240,9 @@ function updateActiveAndRecommendedPositions(positions) {
         html += `<th>Strike ${tooltip("Strike price of the call option. You have the right to buy stock at this price.")}</th>`;
         html += `<th>Expiration ${tooltip("Option expiration date. After this date, the option becomes worthless.")}</th>`;
         html += `<th>DTE ${tooltip("Days to Expiration. More days = less time decay risk. See User Guide for details.")}</th>`;
-        html += `<th>Cost/Share ${tooltip("Effective cost per share of stock exposure. Lower than stock price = leverage advantage. See User Guide for details.")}</th>`;
+        html += `<th>Contract Cost ${tooltip("Cost per contract (100 shares). Uses Ask price (realistic buy price).")}</th>`;
+        html += `<th>Extrinsic $ ${tooltip("Premium above intrinsic value per contract. This is the 'time value' that must be recouped to break-even. Lower is better. See User Guide for details.")}</th>`;
+        html += `<th>Extrinsic % ${tooltip("Extrinsic value as % of contract cost. This is the percentage that was 'lost' immediately at purchase. Lower % = more conservative. See User Guide for details.")}</th>`;
         html += `<th>Delta ${tooltip("How much the option price moves per $1 stock move. 85% means option gains ~85¢ when stock gains $1. See User Guide for details.")}</th>`;
         html += `<th>IV ${tooltip("Implied Volatility at entry. Higher IV = more expensive options, more risk. DITM strategy prefers <30%. See User Guide for details.")}</th>`;
         html += `<th>Score ${tooltip("Composite score ranking options. Lower score = more conservative. See User Guide for details.")}</th>`;
@@ -251,6 +253,7 @@ function updateActiveAndRecommendedPositions(positions) {
             // Determine which stock price to show (current if available, otherwise entry)
             const stockPrice = pos.Stock_Current || pos.Stock_Entry || 0;
             const isStale = !pos.Stock_Current || pos.Stock_Current === 0;
+            const extrinsicClass = 'negative'; // Extrinsic is always a "cost"
 
             html += `<tr class="clickable-row">`;
             html += `<td onclick="showPositionDetail('${pos.Ticker}', '${pos.Strike}', '${pos.Expiration}')" style="cursor: pointer;"><strong>${pos.Ticker}</strong></td>`;
@@ -263,7 +266,9 @@ function updateActiveAndRecommendedPositions(positions) {
             html += `<td onclick="showPositionDetail('${pos.Ticker}', '${pos.Strike}', '${pos.Expiration}')" style="cursor: pointer;">${pos.Strike}</td>`;
             html += `<td onclick="showPositionDetail('${pos.Ticker}', '${pos.Strike}', '${pos.Expiration}')" style="cursor: pointer;">${pos.Expiration}</td>`;
             html += `<td onclick="showPositionDetail('${pos.Ticker}', '${pos.Strike}', '${pos.Expiration}')" style="cursor: pointer;">${pos.DTE || 0}</td>`;
-            html += `<td onclick="showPositionDetail('${pos.Ticker}', '${pos.Strike}', '${pos.Expiration}')" style="cursor: pointer;">${formatCurrency(pos.Cost_Share || pos['Cost/Share'] || 0)}</td>`;
+            html += `<td onclick="showPositionDetail('${pos.Ticker}', '${pos.Strike}', '${pos.Expiration}')" style="cursor: pointer;">${formatCurrency(pos.Contract_Cost || 0)}</td>`;
+            html += `<td onclick="showPositionDetail('${pos.Ticker}', '${pos.Strike}', '${pos.Expiration}')" style="cursor: pointer;" class="${extrinsicClass}">${formatCurrency(pos.Extrinsic_Value || 0)}</td>`;
+            html += `<td onclick="showPositionDetail('${pos.Ticker}', '${pos.Strike}', '${pos.Expiration}')" style="cursor: pointer;" class="${extrinsicClass}">${formatPercent(pos.Extrinsic_Pct || 0)}</td>`;
             html += `<td onclick="showPositionDetail('${pos.Ticker}', '${pos.Strike}', '${pos.Expiration}')" style="cursor: pointer;">${formatPercent(pos.Delta_Entry * 100)}</td>`;
             html += `<td onclick="showPositionDetail('${pos.Ticker}', '${pos.Strike}', '${pos.Expiration}')" style="cursor: pointer;">${formatPercent((pos.IV_Entry || 0) * 100)}</td>`;
             html += `<td onclick="showPositionDetail('${pos.Ticker}', '${pos.Strike}', '${pos.Expiration}')" style="cursor: pointer;">${(pos.Score || 0).toFixed(3)}</td>`;

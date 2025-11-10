@@ -116,7 +116,9 @@ class RecommendationTracker:
                           oi: int, spread_pct: float,
                           cost_per_share: float, contracts: int,
                           total_cost: float, equiv_shares: float,
-                          score: float):
+                          score: float,
+                          extrinsic_value: float = 0,
+                          extrinsic_pct: float = 0):
         """
         Record a single option recommendation.
 
@@ -174,6 +176,10 @@ class RecommendationTracker:
             "total_cost": total_cost,
             "equiv_shares": equiv_shares,
             "score": score,
+
+            # Extrinsic value (time value that must be recouped)
+            "extrinsic_value": extrinsic_value,
+            "extrinsic_pct": extrinsic_pct,
 
             # Performance tracking (to be updated)
             "status": "open",  # open, expired, closed
@@ -372,7 +378,10 @@ class RecommendationTracker:
                 "Entry_Mid": rec["premium_mid"],     # Store mid for reference
                 "Current_Price": current_price,
                 "Contracts": rec["contracts_recommended"],
+                "Contract_Cost": rec["premium_ask"] * 100,  # Cost per contract
                 "Total_Cost": rec["total_cost"],
+                "Extrinsic_Value": rec.get("extrinsic_value", 0),
+                "Extrinsic_Pct": rec.get("extrinsic_pct", 0),
                 "Current_Value": current_value,
                 "P&L": unrealized_pnl,
                 "P&L_%": unrealized_pnl_pct,

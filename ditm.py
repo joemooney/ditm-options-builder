@@ -595,7 +595,9 @@ def build_ditm_portfolio(client, tickers: list, target_capital: float = 50000,
                 contracts=contracts,
                 total_cost=contract_cost,  # Using contract_cost (Ask * 100)
                 equiv_shares=equiv_shares,
-                score=top["Score"]
+                score=top["Score"],
+                extrinsic_value=extrinsic * 100,  # Per contract in dollars
+                extrinsic_pct=extrinsic_pct
             )
 
     df = pd.DataFrame(portfolio)
