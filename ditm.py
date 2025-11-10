@@ -32,6 +32,7 @@ MIN_DTE           = 90
 MAX_IV            = 0.30
 MAX_SPREAD_PCT    = 0.02
 MIN_OI            = 500
+MAX_IMMEDIATE_LOSS_PCT = 0.15     # Maximum acceptable immediate loss % (formula: 5% + DTE/365 * 5%)
 RISK_FREE_RATE    = 0.04          # approximate Treasury yield
 
 # Schwab API Configuration
@@ -420,6 +421,17 @@ def find_ditm_calls(client, ticker: str, max_retries: int = 3) -> pd.DataFrame:
                     # ---- extrinsic value (premium above intrinsic) ----
                     extrinsic = mid - intrinsic  # Time value + volatility premium
                     extrinsic_pct = extrinsic / mid if mid > 0 else 0
+
+                    # ---- immediate loss filter (extrinsic + spread based on DTE) ----
+                    # Calculate DTE-adjusted max immediate loss: 5% base + (DTE/365)*5%
+                    # This allows higher immediate loss for longer-dated options
+                    max_loss_for_dte = 0.05 + (dte / 365.0) * 0.05  # Formula from User Guide
+                    max_loss_cap = min(max_loss_for_dte, MAX_IMMEDIATE_LOSS_PCT)  # Cap at MAX setting
+
+                    # Total immediate loss = extrinsic + spread
+                    immediate_loss_pct = extrinsic_pct + spread_pct
+                    if immediate_loss_pct > max_loss_cap:
+                        continue  # Skip this option, too expensive for its DTE
 
                     rows.append({
                         "Expiration": exp_date_str.split(":")[0],

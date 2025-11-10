@@ -392,6 +392,16 @@
                                            step="50" min="0" value="500">
                                     <small>At least 500 open contracts (ensures reasonable liquidity)</small>
                                 </div>
+                                <div class="form-group">
+                                    <label>
+                                        MAX_IMMEDIATE_LOSS_PCT
+                                        <i class="fas fa-info-circle tooltip-icon"
+                                           data-tooltip="Maximum immediate loss % cap (15% = 0.15). Formula: 5% + (DTE/365)*5%. Prevents overly expensive options. Longer DTE allows higher loss. See User Guide for details."></i>
+                                    </label>
+                                    <input type="number" id="setting-max-immediate-loss" class="form-control"
+                                           step="0.01" min="0.05" max="0.20" value="0.15">
+                                    <small>Maximum cap for immediate loss % (adjusted by DTE formula)</small>
+                                </div>
                             </div>
 
                             <div class="form-actions">

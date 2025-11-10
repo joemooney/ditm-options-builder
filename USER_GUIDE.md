@@ -277,6 +277,108 @@ Let's use a concrete example to understand this:
 
 This tool requires minimum 85% intrinsic value to ensure you're buying "real value" rather than pure speculation.
 
+### Immediate Loss: Understanding the Break-Even Hurdle
+
+**Critical Concept**: When you buy a DITM option, you face an **immediate loss** that must be recouped to break even. This is one of the most important metrics to understand before entering a position.
+
+#### What is Immediate Loss?
+
+Immediate loss is the amount you would lose if you bought an option at the Ask price and immediately sold it at the Bid price. It consists of two components:
+
+**Formula**: `Immediate Loss = Extrinsic Value (Time Value) + Bid-Ask Spread`
+
+#### Real Example
+
+**Scenario**:
+- Stock: AAPL trading at $268.69
+- Strike: $225
+- Bid: $43.20
+- Ask: $43.80
+- Premium (Ask): $43.80
+
+**Calculating Immediate Loss**:
+
+1. **Intrinsic Value**: $268.69 - $225 = $43.69
+2. **Extrinsic Value** (Time Value): $43.80 (Ask) - $43.69 (Intrinsic) = $0.11
+3. **Bid-Ask Spread**: $43.80 (Ask) - $43.20 (Bid) = $0.60
+4. **Total Immediate Loss**: $0.11 + $0.60 = **$0.71 per share**
+5. **Per Contract**: $0.71 × 100 = **$71.00**
+6. **As Percentage**: ($0.71 / $43.80) × 100 = **1.62%**
+
+**What This Means**:
+- You pay $4,380 to buy one contract at Ask
+- If you immediately sold at Bid, you'd get $4,320
+- You'd lose $71 (1.62%) before the stock even moves
+- The stock must move enough to overcome this 1.62% for you to break even
+
+#### Is 11.48% Immediate Loss Reasonable?
+
+You asked an excellent question about an AAPL position with 11.48% immediate loss. Let's analyze when this might be acceptable:
+
+**The 11.48% typically breaks down as**:
+- Bid-Ask Spread: ~1-2% (transaction cost)
+- Extrinsic Value: ~9-10% (time value premium)
+
+**When 11.48% Could Be Acceptable**:
+
+1. **Long Time Horizon (DTE > 365 days)**
+   - If the option has 400+ DTE, that 9-10% extrinsic decays very slowly
+   - Theta (time decay) is minimal for long-dated options
+   - You have over a year for stock appreciation to overcome the cost
+
+2. **High Leverage Justifies Higher Cost**
+   - With 7-13x leverage, small stock movements translate to large option gains
+   - Example: 2% stock gain → ~1.7% option gain (0.85 delta) → with 10x leverage = 17% portfolio gain
+   - The leverage can quickly overcome the 11.48% hurdle
+
+3. **Cheaper Than Margin**
+   - Margin interest: 10-13% annually
+   - If this 11.48% covers 1-2 years, it's competitive with margin costs
+   - $11.48% over 500 days = 8.4% annualized (better than margin!)
+
+**When 11.48% is TOO HIGH** (Red Flags):
+
+1. **Short DTE (<180 days)**: Time decay is too fast
+2. **High IV (>30%)**: You're overpaying for volatility premium
+3. **Low Delta (<0.85)**: Not deep enough ITM, too much extrinsic
+4. **Wide Spread (>2%)**: Excessive transaction costs
+5. **Low Intrinsic (<85%)**: Not conservative enough
+
+**Recommended Immediate Loss Thresholds**:
+
+Based on DTE (Days to Expiration):
+
+| DTE Range | Max Acceptable Immediate Loss | Notes |
+|-----------|------------------------------|-------|
+| 90-180 days | 5-7% | Short-term, time decay risk is high |
+| 181-365 days | 7-10% | Medium-term, balanced approach |
+| 366-540 days | 10-12% | Long-term, slow time decay |
+| 540+ days | 12-15% | Very long-term, minimal daily decay |
+
+**Formula for Maximum Acceptable Loss**:
+```
+Max Immediate Loss % = 5% + (DTE / 365) × 5%
+```
+
+**Examples**:
+- 180 DTE: 5% + (180/365) × 5% = **7.5% max**
+- 365 DTE: 5% + (365/365) × 5% = **10% max**
+- 540 DTE: 5% + (540/365) × 5% = **12.4% max**
+
+**For Your 11.48% AAPL Position, Check**:
+- **Delta**: Should be ≥0.90 (very deep ITM)
+- **DTE**: Should be ≥400 days (long time horizon)
+- **IV**: Should be <25% (low volatility premium)
+- **Intrinsic %**: Should be ≥88% (very conservative)
+
+**Bottom Line**:
+- **Good DITM**: 5-8% immediate loss
+- **Acceptable DITM**: 8-10% immediate loss
+- **Borderline**: 10-12% (only with long DTE, high delta, low IV)
+- **Too Expensive**: >12% immediate loss
+
+**Remember**: The immediate loss must be overcome by stock appreciation and/or time value decay slowing down. The higher the percentage, the more the stock must move in your favor to profit.
+
 ### Delta (Δ)
 **Most important metric for DITM trading!**
 

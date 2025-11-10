@@ -664,6 +664,7 @@ async function loadSettings() {
     document.getElementById('setting-max-iv').value = filters.MAX_IV ?? defaults.MAX_IV;
     document.getElementById('setting-max-spread').value = filters.MAX_SPREAD_PCT ?? defaults.MAX_SPREAD_PCT;
     document.getElementById('setting-min-oi').value = filters.MIN_OI ?? defaults.MIN_OI;
+    document.getElementById('setting-max-immediate-loss').value = filters.MAX_IMMEDIATE_LOSS_PCT ?? defaults.MAX_IMMEDIATE_LOSS_PCT ?? 0.15;
 
     // Load ticker list
     await loadTickerList();
@@ -832,7 +833,8 @@ async function handleSettingsSubmit(e) {
             MIN_DTE: parseInt(document.getElementById('setting-min-dte').value),
             MAX_IV: parseFloat(document.getElementById('setting-max-iv').value),
             MAX_SPREAD_PCT: parseFloat(document.getElementById('setting-max-spread').value),
-            MIN_OI: parseInt(document.getElementById('setting-min-oi').value)
+            MIN_OI: parseInt(document.getElementById('setting-min-oi').value),
+            MAX_IMMEDIATE_LOSS_PCT: parseFloat(document.getElementById('setting-max-immediate-loss').value)
         }
     };
 
@@ -867,6 +869,7 @@ function resetSettings() {
         document.getElementById('setting-max-iv').value = 0.30;
         document.getElementById('setting-max-spread').value = 0.02;
         document.getElementById('setting-min-oi').value = 500;
+        document.getElementById('setting-max-immediate-loss').value = 0.15;
         showToast('Settings reset to defaults', 'info');
     }
 }
