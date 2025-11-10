@@ -613,6 +613,31 @@ class RecommendationTracker:
 
         return "\n".join(report)
 
+    def close_recommendation(self, ticker: str, strike: float, expiration: str, reason: str = "User closed"):
+        """
+        Close a recommendation by marking it as closed.
+
+        Args:
+            ticker: Stock symbol
+            strike: Option strike price
+            expiration: Expiration date (YYYY-MM-DD)
+            reason: Reason for closing (default: "User closed")
+        """
+        # Find and update the recommendation
+        for rec in self.recommendations["recommendations"]:
+            if (rec["ticker"] == ticker and
+                rec["strike"] == strike and
+                rec["expiration"] == expiration and
+                rec["status"] == "open"):
+
+                rec["status"] = "closed"
+                rec["close_reason"] = reason
+                rec["close_date"] = datetime.now().isoformat()
+                self._save_database()
+                return True
+
+        return False
+
     def export_to_csv(self, filename: str = None):
         """Export performance data to CSV."""
         if filename is None:
