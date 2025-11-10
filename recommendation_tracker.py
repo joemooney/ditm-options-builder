@@ -337,6 +337,8 @@ class RecommendationTracker:
                 "Stock_Return_%": stock_return_pct,
                 "Delta_Entry": rec["delta_at_rec"],
                 "Delta_Current": rec.get("current_delta"),
+                "IV_Entry": rec.get("iv_at_rec", 0),
+                "Cost_Share": rec.get("cost_per_share", 0),
                 "Score": rec["score"]
             })
 
