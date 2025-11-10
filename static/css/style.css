@@ -830,7 +830,16 @@ small {
 /* Ensure table headers can show tooltips */
 th {
     position: relative;
-    overflow: visible;
+    overflow: visible !important;
+}
+
+/* Ensure tables don't hide tooltips */
+table {
+    overflow: visible !important;
+}
+
+thead, tbody {
+    overflow: visible !important;
 }
 
 /* Modal */

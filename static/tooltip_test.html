@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Tooltip Test</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <h1>Tooltip Test</h1>
+
+    <p>Test 1: Tooltip in paragraph
+        <i class="fas fa-info-circle tooltip-icon" data-tooltip="This is a test tooltip in a paragraph"></i>
+    </p>
+
+    <table style="border: 1px solid #ccc; padding: 10px;">
+        <thead>
+            <tr>
+                <th>Column 1 <i class="fas fa-info-circle tooltip-icon" data-tooltip="This is a tooltip in a table header"></i></th>
+                <th>Column 2 <i class="fas fa-info-circle tooltip-icon" data-tooltip="Another table header tooltip"></i></th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>Data 1</td>
+                <td>Data 2</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <div style="margin-top: 50px;">
+        <label>
+            Settings Label
+            <i class="fas fa-info-circle tooltip-icon" data-tooltip="This is a tooltip in a label like the settings page"></i>
+        </label>
+    </div>
+
+    <div style="margin-top: 300px;">
+        <!-- Space for tooltips to show -->
+    </div>
+</body>
+</html>
