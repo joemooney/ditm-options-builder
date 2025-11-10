@@ -325,8 +325,7 @@
                                 <div class="form-group">
                                     <label>
                                         MIN_DELTA
-                                        <i class="fas fa-info-circle tooltip-icon"
-                                           data-tooltip="Minimum delta (0.80 = option moves 80¢ per $1 stock move). Higher = more conservative, stock-like behavior. See User Guide for details."></i>
+                                        <span data-tooltip="Minimum delta (0.80 = option moves 80¢ per $1 stock move). Higher = more conservative, stock-like behavior. See User Guide for details."><i class="fas fa-info-circle tooltip-icon"></i></span>
                                     </label>
                                     <input type="number" id="setting-min-delta" class="form-control"
                                            step="0.01" min="0" max="1" value="0.80">
@@ -335,8 +334,7 @@
                                 <div class="form-group">
                                     <label>
                                         MAX_DELTA
-                                        <i class="fas fa-info-circle tooltip-icon"
-                                           data-tooltip="Maximum delta (0.95 avoids extremely deep ITM). Prevents tying up too much capital. See User Guide for details."></i>
+                                        <span data-tooltip="Maximum delta (0.95 avoids extremely deep ITM). Prevents tying up too much capital. See User Guide for details."><i class="fas fa-info-circle tooltip-icon"></i></span>
                                     </label>
                                     <input type="number" id="setting-max-delta" class="form-control"
                                            step="0.01" min="0" max="1" value="0.95">
@@ -345,8 +343,7 @@
                                 <div class="form-group">
                                     <label>
                                         MIN_INTRINSIC_PCT
-                                        <i class="fas fa-info-circle tooltip-icon"
-                                           data-tooltip="Minimum intrinsic value % (85% = most premium is 'real value'). Protects against time decay. Higher = more conservative. See User Guide for details."></i>
+                                        <span data-tooltip="Minimum intrinsic value % (85% = most premium is 'real value'). Protects against time decay. Higher = more conservative. See User Guide for details."><i class="fas fa-info-circle tooltip-icon"></i></span>
                                     </label>
                                     <input type="number" id="setting-min-intrinsic" class="form-control"
                                            step="0.01" min="0" max="1" value="0.85">
@@ -355,8 +352,7 @@
                                 <div class="form-group">
                                     <label>
                                         MIN_DTE
-                                        <i class="fas fa-info-circle tooltip-icon"
-                                           data-tooltip="Minimum days to expiration (90 days = 3 months). Avoids accelerated time decay. More days = safer. See User Guide for details."></i>
+                                        <span data-tooltip="Minimum days to expiration (90 days = 3 months). Avoids accelerated time decay. More days = safer. See User Guide for details."><i class="fas fa-info-circle tooltip-icon"></i></span>
                                     </label>
                                     <input type="number" id="setting-min-dte" class="form-control"
                                            step="1" min="0" value="90">
@@ -365,8 +361,7 @@
                                 <div class="form-group">
                                     <label>
                                         MAX_IV
-                                        <i class="fas fa-info-circle tooltip-icon"
-                                           data-tooltip="Maximum implied volatility (30% = moderate). Rejects highly volatile stocks. Lower = more stable stocks. See User Guide for details."></i>
+                                        <span data-tooltip="Maximum implied volatility (30% = moderate). Rejects highly volatile stocks. Lower = more stable stocks. See User Guide for details."><i class="fas fa-info-circle tooltip-icon"></i></span>
                                     </label>
                                     <input type="number" id="setting-max-iv" class="form-control"
                                            step="0.01" min="0" max="2" value="0.30">
@@ -375,8 +370,7 @@
                                 <div class="form-group">
                                     <label>
                                         MAX_SPREAD_PCT
-                                        <i class="fas fa-info-circle tooltip-icon"
-                                           data-tooltip="Maximum bid-ask spread % (2% max). Ensures liquidity and minimizes trading costs. Lower = more liquid. See User Guide for details."></i>
+                                        <span data-tooltip="Maximum bid-ask spread % (2% max). Ensures liquidity and minimizes trading costs. Lower = more liquid. See User Guide for details."><i class="fas fa-info-circle tooltip-icon"></i></span>
                                     </label>
                                     <input type="number" id="setting-max-spread" class="form-control"
                                            step="0.001" min="0" max="0.1" value="0.02">
@@ -385,8 +379,7 @@
                                 <div class="form-group">
                                     <label>
                                         MIN_OI
-                                        <i class="fas fa-info-circle tooltip-icon"
-                                           data-tooltip="Minimum open interest (500 contracts). Higher = easier to buy/sell, tighter spreads. 1000+ for large positions. See User Guide for details."></i>
+                                        <span data-tooltip="Minimum open interest (500 contracts). Higher = easier to buy/sell, tighter spreads. 1000+ for large positions. See User Guide for details."><i class="fas fa-info-circle tooltip-icon"></i></span>
                                     </label>
                                     <input type="number" id="setting-min-oi" class="form-control"
                                            step="50" min="0" value="500">
@@ -395,8 +388,7 @@
                                 <div class="form-group">
                                     <label>
                                         MAX_IMMEDIATE_LOSS_PCT
-                                        <i class="fas fa-info-circle tooltip-icon"
-                                           data-tooltip="Maximum immediate loss % cap (15% = 0.15). Formula: 5% + (DTE/365)*5%. Prevents overly expensive options. Longer DTE allows higher loss. See User Guide for details."></i>
+                                        <span data-tooltip="Maximum immediate loss % cap (15% = 0.15). Formula: 5% + (DTE/365)*5%. Prevents overly expensive options. Longer DTE allows higher loss. See User Guide for details."><i class="fas fa-info-circle tooltip-icon"></i></span>
                                     </label>
                                     <input type="number" id="setting-max-immediate-loss" class="form-control"
                                            step="0.01" min="0.05" max="0.20" value="0.15">
