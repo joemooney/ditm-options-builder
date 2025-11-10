@@ -781,6 +781,11 @@ def api_position_detail(ticker, strike, expiration):
                 "intrinsic_value": max(0, current_stock_price - float(strike)),
                 "time_value": max(0, current_option_price - max(0, current_stock_price - float(strike))),
 
+                # Immediate loss (extrinsic + spread at entry)
+                "immediate_loss_dollars": pos.get('Extrinsic_Value', 0) if pos.get('Extrinsic_Value') else (entry_spread + max(0, entry_ask - max(0, pos.get('Stock_Entry', current_stock_price) - float(strike)))),
+                "immediate_loss_pct": pos.get('Extrinsic_Pct', 0) if pos.get('Extrinsic_Pct') else ((entry_spread + max(0, entry_ask - max(0, pos.get('Stock_Entry', current_stock_price) - float(strike)))) / entry_ask * 100 if entry_ask > 0 else 0),
+                "total_immediate_loss": (pos.get('Extrinsic_Value', 0) if pos.get('Extrinsic_Value') else (entry_spread + max(0, entry_ask - max(0, pos.get('Stock_Entry', current_stock_price) - float(strike))))) * contracts,
+
                 # Leverage metrics
                 "delta": delta,
                 "delta_adjusted_shares": delta_adjusted_shares,

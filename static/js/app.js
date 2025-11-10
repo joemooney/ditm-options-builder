@@ -1053,6 +1053,16 @@ function displayPositionDetail(position, analysis) {
                     <div class="detail-value">${formatCurrency(analysis.time_value)}</div>
                     <small>Option - Intrinsic</small>
                 </div>
+                <div class="detail-item">
+                    <div class="detail-label">Immediate Loss at Entry</div>
+                    <div class="detail-value negative">${formatCurrency(analysis.immediate_loss_dollars)}</div>
+                    <small>Per contract: ${formatPercent(analysis.immediate_loss_pct)}</small>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">Total Immediate Loss</div>
+                    <div class="detail-value negative">${formatCurrency(analysis.total_immediate_loss)}</div>
+                    <small>All ${analysis.contracts} contract${analysis.contracts > 1 ? 's' : ''} - must be recouped to break-even</small>
+                </div>
             </div>
         </div>
 
