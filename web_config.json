@@ -11,5 +11,13 @@
     "NFLX"
   ],
   "target_capital": 50000,
-  "filters": {}
+  "filters": {
+    "MIN_DELTA": 0.80,
+    "MAX_DELTA": 0.95,
+    "MIN_INTRINSIC_PCT": 0.85,
+    "MIN_DTE": 90,
+    "MAX_IV": 0.30,
+    "MAX_SPREAD_PCT": 0.02,
+    "MIN_OI": 500
+  }
 }

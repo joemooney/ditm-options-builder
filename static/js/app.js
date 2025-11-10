@@ -598,15 +598,28 @@ async function loadDoc(docName) {
 
 // Load settings
 async function loadSettings() {
-    if (!config || !config.filters) return;
+    if (!config) return;
 
-    document.getElementById('setting-min-delta').value = config.filters.MIN_DELTA;
-    document.getElementById('setting-max-delta').value = config.filters.MAX_DELTA;
-    document.getElementById('setting-min-intrinsic').value = config.filters.MIN_INTRINSIC_PCT;
-    document.getElementById('setting-min-dte').value = config.filters.MIN_DTE;
-    document.getElementById('setting-max-iv').value = config.filters.MAX_IV;
-    document.getElementById('setting-max-spread').value = config.filters.MAX_SPREAD_PCT;
-    document.getElementById('setting-min-oi').value = config.filters.MIN_OI;
+    // Default filter values (from ditm.py)
+    const defaults = {
+        MIN_DELTA: 0.80,
+        MAX_DELTA: 0.95,
+        MIN_INTRINSIC_PCT: 0.85,
+        MIN_DTE: 90,
+        MAX_IV: 0.30,
+        MAX_SPREAD_PCT: 0.02,
+        MIN_OI: 500
+    };
+
+    // Use config values if present, otherwise use defaults
+    const filters = config.filters || {};
+    document.getElementById('setting-min-delta').value = filters.MIN_DELTA ?? defaults.MIN_DELTA;
+    document.getElementById('setting-max-delta').value = filters.MAX_DELTA ?? defaults.MAX_DELTA;
+    document.getElementById('setting-min-intrinsic').value = filters.MIN_INTRINSIC_PCT ?? defaults.MIN_INTRINSIC_PCT;
+    document.getElementById('setting-min-dte').value = filters.MIN_DTE ?? defaults.MIN_DTE;
+    document.getElementById('setting-max-iv').value = filters.MAX_IV ?? defaults.MAX_IV;
+    document.getElementById('setting-max-spread').value = filters.MAX_SPREAD_PCT ?? defaults.MAX_SPREAD_PCT;
+    document.getElementById('setting-min-oi').value = filters.MIN_OI ?? defaults.MIN_OI;
 
     // Load ticker list
     await loadTickerList();
