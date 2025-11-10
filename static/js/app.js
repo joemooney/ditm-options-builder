@@ -944,15 +944,36 @@ function displayPositionDetail(position, analysis) {
                 </div>
             </div>
 
-            <div class="warning-box" style="margin-top: 1rem;">
-                <p><strong><i class="fas fa-exclamation-triangle"></i> Important:</strong></p>
+            ${(() => {
+                const dte = analysis.days_to_expiration;
+                let boxClass = 'warning-box';
+                let urgencyText = '';
+
+                if (dte <= 7) {
+                    boxClass = 'danger-box';
+                    urgencyText = '<strong style="color: #dc3545;">⚠️ URGENT - EXPIRING IN ' + dte + ' DAYS!</strong><br>';
+                } else if (dte <= 14) {
+                    boxClass = 'danger-box';
+                    urgencyText = '<strong style="color: #dc3545;">⚠️ WARNING - EXPIRING IN ' + dte + ' DAYS!</strong><br>';
+                } else if (dte <= 30) {
+                    boxClass = 'warning-box';
+                    urgencyText = '<strong style="color: #ff9800;">⏰ NOTICE - EXPIRING IN ' + dte + ' DAYS</strong><br>';
+                }
+
+                return `
+            <div class="${boxClass}" style="margin-top: 1rem;">
+                <p><strong><i class="fas fa-exclamation-triangle"></i> Auto-Exercise Warning (${dte} DTE):</strong></p>
+                ${urgencyText ? '<p style="margin: 0.5rem 0;">' + urgencyText + '</p>' : ''}
                 <ul style="margin: 0.5rem 0 0 1.5rem;">
                     <li>If you don't sell or exercise before expiration, and the option is in-the-money, it will be <strong>automatically exercised</strong></li>
                     <li>You will need <strong>${formatCurrency(analysis.exercise_cost)}</strong> in your account to cover the exercise</li>
                     <li>If you lack funds, your broker may sell the option or reject the exercise</li>
                     <li><strong>Recommendation:</strong> Always sell DITM options before expiration rather than exercising</li>
+                    ${dte <= 30 ? '<li style="color: ' + (dte <= 14 ? '#dc3545' : '#ff9800') + '; font-weight: bold;">⚠️ Consider closing this position soon to avoid expiration complications!</li>' : ''}
                 </ul>
             </div>
+                `;
+            })()}
         </div>
 
         <!-- Exit Strategy -->

@@ -1118,6 +1118,23 @@ small {
     color: var(--warning-color);
 }
 
+.danger-box {
+    background: rgba(220, 53, 69, 0.1);
+    border-left: 4px solid var(--danger-color);
+    padding: 1rem;
+    border-radius: var(--radius);
+    margin: 1rem 0;
+}
+
+.danger-box p {
+    margin: 0;
+    color: var(--text-primary);
+}
+
+.danger-box strong {
+    color: var(--danger-color);
+}
+
 /* Responsive */
 @media (max-width: 768px) {
     .container {
