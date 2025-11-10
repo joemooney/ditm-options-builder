@@ -66,7 +66,6 @@ def load_config():
             return json.load(f)
     return {
         "tickers": ["AAPL", "MSFT", "GOOGL", "JNJ", "JPM"],
-        "target_capital": 50000,
         "use_ask_for_entry": True,  # Use ask price for breakeven (realistic), False for mid price (optimistic)
         "filters": {
             "MIN_DELTA": MIN_DELTA,
@@ -109,7 +108,6 @@ def api_scan():
     try:
         data = request.json
         tickers = data.get('tickers', [])
-        target_capital = data.get('target_capital', 50000)
 
         if not tickers:
             return jsonify({"success": False, "error": "No tickers provided"}), 400
@@ -122,11 +120,10 @@ def api_scan():
         skipped_tickers = [t for t in tickers if t in recent_tickers]
         tickers_to_scan = [t for t in tickers if t not in recent_tickers]
 
-        # Run scan with tracking
+        # Run scan with tracking (1 contract per ticker)
         portfolio_df = build_ditm_portfolio(
             client,
             tickers,
-            target_capital=target_capital,
             tracker=tracker,
             save_recommendations=True
         )

@@ -10,7 +10,6 @@
     "AMZN",
     "NFLX"
   ],
-  "target_capital": 50000,
   "filters": {
     "MIN_DELTA": 0.80,
     "MAX_DELTA": 0.95,

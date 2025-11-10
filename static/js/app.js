@@ -443,8 +443,6 @@ function removeTicker(ticker) {
 async function handleScanSubmit(e) {
     e.preventDefault();
 
-    const capital = parseInt(document.getElementById('capital-input').value);
-
     if (tickers.length === 0) {
         showToast('Please add at least one ticker symbol', 'error');
         return;
@@ -457,8 +455,7 @@ async function handleScanSubmit(e) {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                tickers: tickers,
-                target_capital: capital
+                tickers: tickers
             })
         });
 

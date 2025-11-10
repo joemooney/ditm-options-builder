@@ -85,14 +85,13 @@ class RecommendationTracker:
         return recent_tickers
 
     def record_scan(self, scan_date: str, tickers: List[str],
-                    target_capital: float, filter_params: Dict):
+                    filter_params: Dict):
         """
         Record a new scan session.
 
         Args:
             scan_date: ISO format date string
             tickers: List of ticker symbols scanned
-            target_capital: Target portfolio capital
             filter_params: Dictionary of filter parameters used
         """
         scan_id = f"scan_{scan_date.replace('-', '').replace(':', '').replace(' ', '_')}"
@@ -100,7 +99,6 @@ class RecommendationTracker:
         self.recommendations["scans"][scan_id] = {
             "scan_date": scan_date,
             "tickers": tickers,
-            "target_capital": target_capital,
             "filter_params": filter_params,
             "recommendations_count": 0
         }

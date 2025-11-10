@@ -460,13 +460,13 @@ def find_ditm_calls(client, ticker: str, max_retries: int = 3) -> pd.DataFrame:
 # -------------------------------------------------
 # PORTFOLIO BUILDER
 # -------------------------------------------------
-def build_ditm_portfolio(client, tickers: list, target_capital: float = 50000,
+def build_ditm_portfolio(client, tickers: list,
                          delay_between_stocks: float = 0.5,
                          tracker: RecommendationTracker = None,
                          save_recommendations: bool = True) -> pd.DataFrame:
     """
     Builds a conservative DITM call portfolio across multiple stocks using Schwab API.
-    Allocates equally (e.g., $10k per stock for $50k total).
+    Scans for 1 contract per ticker to find the best DITM opportunities.
     Returns summary DataFrame.
 
     Args:
@@ -523,7 +523,7 @@ def build_ditm_portfolio(client, tickers: list, target_capital: float = 50000,
             "MIN_OI": MIN_OI,
             "RISK_FREE_RATE": RISK_FREE_RATE
         }
-        scan_id = tracker.record_scan(scan_date, tickers, target_capital, filter_params)
+        scan_id = tracker.record_scan(scan_date, tickers, filter_params)
 
     for i, ticker in enumerate(tickers):
         print(f"\nProcessing {ticker} ({i+1}/{num_stocks})...")
