@@ -484,14 +484,12 @@ def build_ditm_portfolio(client, tickers: list,
     Args:
         client: Schwab API client
         tickers: List of stock symbols to scan
-        target_capital: Total capital to allocate
         delay_between_stocks: Delay in seconds between API calls
         tracker: RecommendationTracker instance (created if None)
         save_recommendations: Whether to save to tracking database
     """
     portfolio = []
     num_stocks = len(tickers)
-    per_stock_capital = target_capital / num_stocks
 
     # Initialize tracker and create scan record
     scan_id = None
@@ -522,7 +520,6 @@ def build_ditm_portfolio(client, tickers: list,
         print(f"\nScanning {len(tickers_to_scan)} ticker(s), skipping {len(skipped_tickers)} with recent recommendations.")
         tickers = tickers_to_scan
         num_stocks = len(tickers)
-        per_stock_capital = target_capital / num_stocks
 
         scan_date = datetime.now().isoformat()
         filter_params = {
@@ -624,7 +621,7 @@ def build_ditm_portfolio(client, tickers: list,
         print(f"\n{'=' * 70}")
         print(f"PORTFOLIO SUMMARY")
         print(f"{'=' * 70}")
-        print(f"Total Invested: ${total_cost_port:,.2f} (of ${target_capital:,.2f} target)")
+        print(f"Total Invested: ${total_cost_port:,.2f}")
         print(f"Total Equivalent Shares Controlled: {total_equiv:,}")
         print(f"Capital Efficiency: {(total_cost_port / total_equiv) * 100:.1f}% of stock cost")
         print(f"{'=' * 70}\n")
@@ -650,11 +647,11 @@ if __name__ == "__main__":
     stocks = ["AAPL", "MSFT", "GOOGL", "JNJ", "JPM"]
 
     print(f"\nScanning {len(stocks)} stocks for DITM call opportunities...")
-    print(f"Target capital: $50,000")
+    print(f"Scanning for 1 contract per ticker")
     print(f"Filters: Delta {MIN_DELTA}-{MAX_DELTA}, DTE >{MIN_DTE}, IV <{MAX_IV}")
     print("=" * 70)
 
-    portfolio = build_ditm_portfolio(client, stocks, target_capital=50000)
+    portfolio = build_ditm_portfolio(client, stocks)
 
     if not portfolio.empty:
         pd.set_option('display.max_columns', None)
