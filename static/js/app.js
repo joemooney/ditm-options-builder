@@ -185,8 +185,8 @@ function updateActiveAndRecommendedPositions(positions) {
         html += `<th>DTE ${tooltip("Days to Expiration. More days = less time decay risk. See User Guide for details.")}</th>`;
         html += `<th>Qty ${tooltip("Number of contracts held. Each contract represents 100 shares.")}</th>`;
         html += `<th>Contract Cost ${tooltip("Cost per contract (100 shares) at entry. Your average purchase price.")}</th>`;
-        html += `<th>Extrinsic $ ${tooltip("Premium above intrinsic value per contract. This is the 'time value' that must be recouped to break-even. Lower is better. See User Guide for details.")}</th>`;
-        html += `<th>Extrinsic % ${tooltip("Extrinsic value as % of contract cost. This is the percentage that was 'lost' immediately at purchase. Lower % = more conservative. See User Guide for details.")}</th>`;
+        html += `<th>Extrinsic $ ${tooltip("Time value portion of option price at entry. This was the amount above intrinsic value when you bought. Lower is better. See User Guide for details.")}</th>`;
+        html += `<th>Extrinsic % ${tooltip("Extrinsic value as % of contract cost. Shows how much of your entry price was time value. Lower % = more conservative. See User Guide for details.")}</th>`;
         html += `<th>Total Cost ${tooltip("Total amount invested in this position (contract cost × quantity × 100).")}</th>`;
         html += `<th>Value ${tooltip("Current market value of the position. Updated from Schwab account.")}</th>`;
         html += `<th>P&L ${tooltip("Profit/Loss: Current Value - Total Cost. Shows both dollar amount and percentage. See User Guide for details.")}</th>`;
@@ -241,8 +241,8 @@ function updateActiveAndRecommendedPositions(positions) {
         html += `<th>Expiration ${tooltip("Option expiration date. After this date, the option becomes worthless.")}</th>`;
         html += `<th>DTE ${tooltip("Days to Expiration. More days = less time decay risk. See User Guide for details.")}</th>`;
         html += `<th>Contract Cost ${tooltip("Cost per contract (100 shares). Uses Ask price (realistic buy price).")}</th>`;
-        html += `<th>Extrinsic $ ${tooltip("Premium above intrinsic value per contract. This is the 'time value' that must be recouped to break-even. Lower is better. See User Guide for details.")}</th>`;
-        html += `<th>Extrinsic % ${tooltip("Extrinsic value as % of contract cost. This is the percentage that was 'lost' immediately at purchase. Lower % = more conservative. See User Guide for details.")}</th>`;
+        html += `<th>Immediate Loss $ ${tooltip("Total immediate loss per contract if bought and sold right away: includes time value (extrinsic) + bid-ask spread. This must be recouped to break-even. Lower is better. See User Guide for details.")}</th>`;
+        html += `<th>Immediate Loss % ${tooltip("Immediate loss as % of contract cost. Shows total percentage at risk from time decay and spread. Lower % = more conservative. See User Guide for details.")}</th>`;
         html += `<th>Delta ${tooltip("How much the option price moves per $1 stock move. 85% means option gains ~85¢ when stock gains $1. See User Guide for details.")}</th>`;
         html += `<th>IV ${tooltip("Implied Volatility at entry. Higher IV = more expensive options, more risk. DITM strategy prefers <30%. See User Guide for details.")}</th>`;
         html += `<th>Score ${tooltip("Composite score ranking options. Lower score = more conservative. See User Guide for details.")}</th>`;
@@ -511,8 +511,8 @@ function displayScanResults(data) {
         html += `<th>DTE ${tooltip("Days to Expiration. More days = less time decay risk. See User Guide for details.")}</th>`;
         html += `<th>Delta ${tooltip("How much the option price moves per $1 stock move. 0.85 delta means option gains ~85¢ when stock gains $1. Higher = more stock-like. See User Guide for details.")}</th>`;
         html += `<th>Contract Cost ${tooltip("Cost to purchase one contract (100 shares). Uses Ask price (realistic buy price).")}</th>`;
-        html += `<th>Extrinsic $ ${tooltip("Premium above intrinsic value (time value). This amount would be 'lost' if bought and sold immediately. Lower is better. See User Guide for details.")}</th>`;
-        html += `<th>Extrinsic % ${tooltip("Extrinsic value as % of option price. Lower % = more conservative, less exposed to time decay. DITM typically <15%. See User Guide for details.")}</th>`;
+        html += `<th>Immediate Loss $ ${tooltip("Total immediate loss per contract if bought and sold right away: includes time value (extrinsic) + bid-ask spread. This must be recouped to break-even. Lower is better. See User Guide for details.")}</th>`;
+        html += `<th>Immediate Loss % ${tooltip("Immediate loss as % of contract cost. Shows total percentage at risk from time decay and spread. Lower % = more conservative. DITM typically <15%. See User Guide for details.")}</th>`;
         html += `<th>Score ${tooltip("Composite score ranking options. Lower score = more conservative. Considers delta, intrinsic %, IV, and spread. See User Guide for details.")}</th>`;
         html += '</tr></thead><tbody>';
 

@@ -548,10 +548,13 @@ def build_ditm_portfolio(client, tickers: list, target_capital: float = 50000,
         contract_cost = top["Ask"] * 100  # Use Ask price (realistic buy price)
         equiv_shares = contracts * top["Delta"] * 100  # Delta-adjusted exposure
 
-        # Calculate extrinsic value (premium "lost" immediately)
+        # Calculate total immediate loss (extrinsic + spread)
+        # This is what you'd lose if you bought at Ask and sold at Bid immediately
         intrinsic = max(S - top["Strike"], 0)
-        extrinsic = top["Ask"] - intrinsic  # Using Ask price
-        extrinsic_pct = (extrinsic / top["Ask"]) * 100 if top["Ask"] > 0 else 0
+        extrinsic = top["Ask"] - intrinsic  # Time value portion
+        spread_loss = top["Ask"] - top["Bid"]  # Immediate spread loss
+        total_immediate_loss = extrinsic + spread_loss  # Total amount to recoup
+        total_immediate_loss_pct = (total_immediate_loss / top["Ask"]) * 100 if top["Ask"] > 0 else 0
 
         # Conservative check: Ensure cost/share < stock price * 0.98
         if top["Cost/Share"] > S * 0.98:
@@ -568,8 +571,8 @@ def build_ditm_portfolio(client, tickers: list, target_capital: float = 50000,
             "Cost/Share": round(top["Cost/Share"], 2),
             "Contracts": contracts,
             "Contract Cost": round(contract_cost, 2),
-            "Extrinsic Value": round(extrinsic * 100, 2),  # Per contract in dollars
-            "Extrinsic %": round(extrinsic_pct, 2),
+            "Extrinsic Value": round(total_immediate_loss * 100, 2),  # Per contract in dollars (extrinsic + spread)
+            "Extrinsic %": round(total_immediate_loss_pct, 2),
             "Equiv Shares": round(equiv_shares),
             "Score": round(top["Score"], 3)
         })
@@ -596,8 +599,8 @@ def build_ditm_portfolio(client, tickers: list, target_capital: float = 50000,
                 total_cost=contract_cost,  # Using contract_cost (Ask * 100)
                 equiv_shares=equiv_shares,
                 score=top["Score"],
-                extrinsic_value=extrinsic * 100,  # Per contract in dollars
-                extrinsic_pct=extrinsic_pct
+                extrinsic_value=total_immediate_loss * 100,  # Per contract in dollars (extrinsic + spread)
+                extrinsic_pct=total_immediate_loss_pct
             )
 
     df = pd.DataFrame(portfolio)
