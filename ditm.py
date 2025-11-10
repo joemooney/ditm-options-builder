@@ -135,7 +135,7 @@ def bs_call_delta(S, K, T, r, sigma):
 def get_account_positions(client) -> pd.DataFrame:
     """
     Fetch actual option positions from Schwab account.
-    Returns DataFrame with ticker, strike, expiration, quantity.
+    Returns DataFrame with ticker, strike, expiration, quantity, and extrinsic value.
     """
     try:
         # Get all accounts with positions
@@ -148,6 +148,8 @@ def get_account_positions(client) -> pd.DataFrame:
         accounts_data = response.json()
 
         positions = []
+        tickers_to_fetch = set()
+
         for account in accounts_data:
             if 'positions' not in account['securitiesAccount']:
                 continue
@@ -174,17 +176,22 @@ def get_account_positions(client) -> pd.DataFrame:
                 if quantity <= 0:
                     continue
 
+                strike = instrument.get('strikePrice', 0)
+                avg_price = position.get('averagePrice', 0)
+
                 positions.append({
                     'Ticker': underlying,
                     'Symbol': symbol,
-                    'Strike': instrument.get('strikePrice', 0),
+                    'Strike': strike,
                     'Expiration': instrument.get('expirationDate', ''),
                     'Quantity': int(quantity),
                     'Description': instrument.get('description', ''),
-                    'Average_Price': position.get('averagePrice', 0),
+                    'Average_Price': avg_price,
                     'Current_Value': position.get('marketValue', 0),
                     'Unrealized_PL': position.get('currentDayProfitLoss', 0)
                 })
+
+                tickers_to_fetch.add(underlying)
 
         df = pd.DataFrame(positions)
 
@@ -192,6 +199,39 @@ def get_account_positions(client) -> pd.DataFrame:
         if not df.empty and 'Expiration' in df.columns:
             # Schwab returns dates as milliseconds since epoch
             df['Expiration'] = pd.to_datetime(df['Expiration'], unit='ms').dt.strftime('%Y-%m-%d')
+
+            # Get current stock prices to calculate intrinsic/extrinsic values
+            stock_prices = {}
+            for ticker in tickers_to_fetch:
+                try:
+                    quote_resp = client.get_quote(ticker)
+                    if quote_resp.status_code == 200:
+                        quote_data = quote_resp.json()
+                        stock_prices[ticker] = quote_data.get(ticker, {}).get('quote', {}).get('lastPrice', 0)
+                except Exception as e:
+                    print(f"Warning: Could not get quote for {ticker}: {e}")
+                    stock_prices[ticker] = 0
+
+            # Calculate extrinsic values
+            df['Stock_Price'] = df['Ticker'].map(stock_prices)
+            df['Intrinsic_Value'] = df.apply(
+                lambda row: max(row['Stock_Price'] - row['Strike'], 0) if row['Stock_Price'] > 0 else 0,
+                axis=1
+            )
+            df['Extrinsic_Value'] = df['Average_Price'] - df['Intrinsic_Value']
+            df['Extrinsic_Pct'] = df.apply(
+                lambda row: (row['Extrinsic_Value'] / row['Average_Price'] * 100) if row['Average_Price'] > 0 else 0,
+                axis=1
+            )
+            df['Contract_Cost'] = df['Average_Price'] * 100  # Per contract in dollars
+
+            # Calculate additional display fields
+            df['Total_Cost'] = df['Average_Price'] * df['Quantity'] * 100
+            df['P&L'] = df['Current_Value'] - df['Total_Cost']
+            df['P&L_%'] = (df['P&L'] / df['Total_Cost'] * 100).fillna(0)
+
+            # Calculate DTE
+            df['DTE'] = (pd.to_datetime(df['Expiration']) - pd.Timestamp.now()).dt.days
 
         return df
 

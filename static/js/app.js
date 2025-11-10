@@ -183,21 +183,30 @@ function updateActiveAndRecommendedPositions(positions) {
         html += `<th>Strike ${tooltip("Strike price of the call option. You have the right to buy stock at this price.")}</th>`;
         html += `<th>Expiration ${tooltip("Option expiration date. After this date, the option becomes worthless.")}</th>`;
         html += `<th>DTE ${tooltip("Days to Expiration. More days = less time decay risk. See User Guide for details.")}</th>`;
-        html += `<th>Cost ${tooltip("Total cost paid for this position (contract cost × quantity).")}</th>`;
+        html += `<th>Qty ${tooltip("Number of contracts held. Each contract represents 100 shares.")}</th>`;
+        html += `<th>Contract Cost ${tooltip("Cost per contract (100 shares) at entry. Your average purchase price.")}</th>`;
+        html += `<th>Extrinsic $ ${tooltip("Premium above intrinsic value per contract. This is the 'time value' that must be recouped to break-even. Lower is better. See User Guide for details.")}</th>`;
+        html += `<th>Extrinsic % ${tooltip("Extrinsic value as % of contract cost. This is the percentage that was 'lost' immediately at purchase. Lower % = more conservative. See User Guide for details.")}</th>`;
+        html += `<th>Total Cost ${tooltip("Total amount invested in this position (contract cost × quantity × 100).")}</th>`;
         html += `<th>Value ${tooltip("Current market value of the position. Updated from Schwab account.")}</th>`;
-        html += `<th>P&L ${tooltip("Profit/Loss: Current Value - Cost. Shows both dollar amount and percentage. See User Guide for details.")}</th>`;
+        html += `<th>P&L ${tooltip("Profit/Loss: Current Value - Total Cost. Shows both dollar amount and percentage. See User Guide for details.")}</th>`;
         html += '</tr></thead><tbody>';
 
         activePositions.forEach(pos => {
             const pnlClass = pos['P&L'] >= 0 ? 'positive' : 'negative';
+            const extrinsicClass = 'negative'; // Extrinsic is always a "cost"
             html += `<tr class="clickable-row" onclick="showPositionDetail('${pos.Ticker}', '${pos.Strike}', '${pos.Expiration}')" style="cursor: pointer;">`;
             html += `<td><strong>${pos.Ticker}</strong></td>`;
             html += `<td>${pos.Strike}</td>`;
             html += `<td>${pos.Expiration}</td>`;
             html += `<td>${pos.DTE || 0}</td>`;
-            html += `<td>${formatCurrency(pos.Total_Cost)}</td>`;
-            html += `<td>${formatCurrency(pos.Current_Value)}</td>`;
-            html += `<td class="${pnlClass}">${formatCurrency(pos['P&L'])} (${formatPercent(pos['P&L_%'])})</td>`;
+            html += `<td>${pos.Quantity || 0}</td>`;
+            html += `<td>${formatCurrency(pos.Contract_Cost || 0)}</td>`;
+            html += `<td class="${extrinsicClass}">${formatCurrency((pos.Extrinsic_Value || 0) * 100)}</td>`;
+            html += `<td class="${extrinsicClass}">${formatPercent(pos.Extrinsic_Pct || 0)}</td>`;
+            html += `<td>${formatCurrency(pos.Total_Cost || 0)}</td>`;
+            html += `<td>${formatCurrency(pos.Current_Value || 0)}</td>`;
+            html += `<td class="${pnlClass}">${formatCurrency(pos['P&L'] || 0)} (${formatPercent(pos['P&L_%'] || 0)})</td>`;
             html += '</tr>';
         });
 
