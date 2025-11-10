@@ -32,9 +32,49 @@ When you **buy** an option, you are purchasing the **right** (but not the obliga
 - You buy 1 AAPL call option with a $200 strike price for $28 premium
 - You pay: $2,800 ($28 × 100 shares)
 - You get: The **right** to buy 100 shares of AAPL at $200 each (even though it's trading at $225)
-- Your choice: Exercise it (buy at $200), sell the option, or let it expire
 - **Maximum loss**: $2,800 (the premium you paid)
 - **Maximum gain**: Unlimited (stock can rise indefinitely)
+
+**Your Three Exit Options**:
+
+1. **Sell the Option (Most Common)**
+   - You can sell your option contract **at any time** during market hours before expiration
+   - This is called "Sell to Close"
+   - Example: You paid $28, option is now worth $35, sell for $3,500 profit
+   - **No additional capital needed** - just sell like you would sell a stock
+   - You keep the profit (or loss) and the position is closed
+   - **Recommended approach for DITM strategies**
+
+2. **Exercise the Option (Rarely Optimal)**
+   - You actively choose to buy the 100 shares at the strike price
+   - Example: Pay $20,000 to buy 100 shares at $200 strike
+   - Requires significant capital (strike price × 100 shares)
+   - You then own the shares and can hold or sell them
+   - Usually worse than selling the option (you lose the time value)
+   - Only makes sense if you want to own the shares long-term
+
+3. **Let It Expire (Automatic Exercise If ITM)**
+   - **CRITICAL**: If your option is in-the-money at expiration, it will be **automatically exercised** by your broker
+   - Example: At expiration, AAPL is at $225, your $200 call is ITM → Auto-exercises
+   - You will be **forced to buy** 100 shares at $200 ($20,000 required)
+   - If you don't have $20,000 in your account:
+     - Schwab may automatically sell the option before expiration (3-4pm on expiration day)
+     - Or create a margin call requiring you to deposit funds immediately
+     - Or sell the shares immediately after exercise, creating unexpected tax events
+   - **If the option is out-of-the-money** at expiration (stock below strike), it expires worthless and you lose your $2,800 premium
+
+**What "Let It Expire" Really Means**:
+
+- **ITM (In-the-Money)** at expiration: Auto-exercise → You must buy the shares → Need cash equal to (strike × 100)
+- **OTM (Out-of-the-Money)** at expiration: Expires worthless → You lose your premium, option disappears
+- **Schwab Protection**: To protect you, Schwab typically auto-sells ITM options on expiration day if you lack funds
+
+**When Can You Sell Your Option?**
+
+- **Any time** during market hours (9:30am - 4:00pm ET), from the moment you buy it until 4:00pm on expiration day
+- No penalty for selling early
+- No requirement to hold until expiration
+- This is the **primary way** to exit DITM positions with profit
 
 **Put Option Buyer Example**:
 - AAPL stock is trading at $225
@@ -731,6 +771,136 @@ Your effective cost as a percentage of buying shares outright.
 - **Savings: 12.5%** (freed up for other uses)
 
 **Note**: This varies by market conditions and which options qualify.
+
+---
+
+## Understanding Expiration and Exit Mechanics
+
+This is one of the **most important** sections - it addresses what happens if you forget to close your position.
+
+### The Critical Question: What Happens at Expiration?
+
+Many new options traders worry: "What if I forget to sell my option before expiration?"
+
+The answer depends on whether your option is in-the-money (ITM) or out-of-the-money (OTM):
+
+#### Scenario 1: Option is ITM at Expiration (Most DITM Cases)
+
+**Example**: You own AAPL $200 call, stock is at $225 at 4pm on expiration day
+
+**What happens automatically**:
+1. **Your broker will auto-exercise the option** (you don't choose this, it happens automatically)
+2. You are **required to buy** 100 shares at $200 = **$20,000 cash needed**
+3. If you have $20,000: Shares appear in your account Monday morning
+4. If you **don't** have $20,000:
+   - **Schwab's protection mechanism**: They will automatically sell your option between 3-4pm on expiration day
+   - Or they'll exercise and immediately sell shares (creating tax events and potential slippage)
+   - Or they'll issue a margin call requiring immediate deposit
+
+**The key point**: You won't just "lose your premium" if ITM - you'll be forced into a stock purchase you may not be able to afford!
+
+#### Scenario 2: Option is OTM at Expiration (Rare for DITM)
+
+**Example**: You own AAPL $200 call, stock drops to $190 at expiration
+
+**What happens**:
+- Option expires worthless
+- You lose your entire premium paid ($2,800 in example)
+- No additional action required
+- Option disappears from your account
+
+### How to Avoid Expiration Problems
+
+**Best Practice (Recommended for DITM)**:
+- Set a calendar alert for **60 days before expiration**
+- Plan to close (sell) the position between 30-60 days before expiration
+- **Never hold DITM options to expiration day**
+
+**Why sell before expiration?**
+1. Avoid automatic exercise complications
+2. Capture remaining time value (free money!)
+3. Avoid expiration day volatility and wide spreads
+4. No capital requirement - just sell like a stock
+5. Clean exit with immediate cash settlement
+
+**Emergency: Expiration Day Arrives**
+
+If you accidentally hold to expiration day:
+
+**Before 3:00pm ET**:
+- You can still sell your option normally
+- Use limit orders (spreads may be wider)
+- Takes 5-10 minutes to execute
+
+**After 3:00pm ET**:
+- Schwab may auto-sell ITM options to protect you
+- If you have sufficient funds, they may let it auto-exercise
+- Contact Schwab immediately if you need help: 1-800-435-4000
+
+### Can You Sell Anytime Before Expiration?
+
+**YES!** This is crucial to understand:
+
+- You can sell your option **any time** during market hours (9:30am - 4:00pm ET)
+- From the moment you buy it until 4:00pm on expiration day
+- **No penalty** for selling early
+- **No lock-up period**
+- No need to notify anyone
+- Just enter "Sell to Close" order like selling a stock
+
+**Example Timeline**:
+```
+January 1: Buy option
+January 15: Don't like the position → Sell it (fine!)
+February 10: Position up 20% → Sell it (fine!)
+May 15: 60 days to expiration → Sell it (recommended)
+June 20: Expiration day, 3:50pm → Can still sell (but risky/late!)
+June 20: 4:01pm → Too late, auto-exercise happens
+```
+
+### Real-World Example: Forgetting to Close
+
+**Scenario**:
+- You bought 4 AAPL $200 calls for $28 ($11,200 investment)
+- Expiration day arrives, you forgot about them
+- AAPL is at $225 (option is ITM)
+
+**What happens at 4pm**:
+- Auto-exercise triggers
+- You must buy: 4 contracts × 100 shares × $200 = **$80,000**
+
+**If you have $80,000 in account**:
+- Monday morning: You own 400 AAPL shares
+- Each share cost you: $200 strike + $28 premium = $228 per share
+- Current value: $225 per share
+- You're actually **underwater** by $3/share = $1,200 loss
+- Plus you lost all time value (could've sold option for $30+ instead of $25 intrinsic)
+
+**If you have only $20,000 in account**:
+- Schwab sees insufficient funds around 3:30pm
+- They automatically sell your 4 contracts (without asking you)
+- You get whatever the market price is (maybe $29, maybe $31)
+- Position closed, no exercise
+- You might be happy or sad depending on the price they got
+
+**Lesson**: Always plan your exit. Don't let expiration decide for you.
+
+### Summary: Expiration Decision Tree
+
+```
+Do you want to own the shares?
+├─ NO → Sell the option before expiration (recommended)
+│        ✓ Get full option value (intrinsic + time)
+│        ✓ No capital needed
+│        ✓ Clean exit
+│
+└─ YES → Still sell the option, then buy shares separately
+         Why? You'll lose time value if you exercise
+         Better: Sell option for $30, buy shares at $225 = net $225.30/share
+         Worse: Exercise at $200 strike + $28 premium = $228/share
+```
+
+**Bottom line**: You should almost always sell your DITM options rather than let them expire or exercise them.
 
 ---
 
