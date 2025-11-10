@@ -463,6 +463,19 @@ def api_position_detail(ticker, strike, expiration):
         # Current option price per contract
         current_option_price = current_value / contracts if contracts > 0 and current_value > 0 else 0
 
+        # If current option price is 0 (new position or not updated), estimate from intrinsic value
+        if current_option_price == 0:
+            intrinsic_now = max(0, current_stock_price - float(strike))
+            # For brand new position, assume you'd get bid price if selling immediately
+            # Use entry bid as proxy for immediate sell (realistic loss from spread)
+            if entry_bid > 0:
+                current_option_price = entry_bid
+                current_value = current_option_price * contracts
+            else:
+                # Fallback: use intrinsic value (assumes zero time value for immediate calculation)
+                current_option_price = intrinsic_now
+                current_value = current_option_price * contracts * 100
+
         # Cost per share (premium paid divided by 100 shares per contract)
         total_cost = pos.get('Total_Cost') or 0
         if total_cost > 0 and contracts > 0:
