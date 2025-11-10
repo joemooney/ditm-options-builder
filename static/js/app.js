@@ -292,7 +292,14 @@ function checkIfDataStale(positions) {
 
 // Refresh prices for recommended positions
 async function refreshRecommendedPrices() {
-    showToast('Refreshing prices...', 'info');
+    // Disable button and show loading state
+    const button = event.target.closest('button');
+    if (button) {
+        button.disabled = true;
+        button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Refreshing...';
+    }
+
+    showToast('Fetching latest prices from Schwab...', 'info');
 
     try {
         const response = await fetch('/api/performance?update=true');
@@ -300,13 +307,24 @@ async function refreshRecommendedPrices() {
 
         if (data.success) {
             showToast('Prices refreshed successfully', 'success');
-            loadDashboard();
+            // Reload dashboard to show updated prices
+            await loadDashboard();
         } else {
-            showToast('Failed to refresh prices', 'error');
+            showToast('Failed to refresh prices: ' + (data.error || 'Unknown error'), 'error');
+            // Re-enable button on error
+            if (button) {
+                button.disabled = false;
+                button.innerHTML = '<i class="fas fa-sync"></i> Refresh Prices';
+            }
         }
     } catch (error) {
         console.error('Error refreshing prices:', error);
         showToast('Error refreshing prices: ' + error.message, 'error');
+        // Re-enable button on error
+        if (button) {
+            button.disabled = false;
+            button.innerHTML = '<i class="fas fa-sync"></i> Refresh Prices';
+        }
     }
 }
 

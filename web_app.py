@@ -175,6 +175,8 @@ def api_performance():
         client = None
         if update:
             client = get_schwab_client()
+            # Update all open recommendation prices from Schwab
+            tracker.update_all_open_recommendations(client)
 
         # Get performance summary (all recommendations)
         df = tracker.get_performance_summary()
