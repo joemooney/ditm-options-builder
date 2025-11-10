@@ -208,8 +208,8 @@ function updateActiveAndRecommendedPositions(positions) {
         // Add refresh button if data is stale
         if (shouldShowRefresh) {
             html += '<div class="warning-box" style="margin-bottom: 1rem;">';
-            html += '<p><strong><i class="fas fa-exclamation-triangle"></i> Stale Data</strong></p>';
-            html += '<p>Price data is more than 24 hours old. ';
+            html += '<p><strong><i class="fas fa-exclamation-triangle"></i> Stale Price Data</strong></p>';
+            html += '<p>Stock prices have not been updated since the last market close. ';
             html += '<button class="btn btn-primary" onclick="refreshRecommendedPrices()" style="margin-left: 0.5rem;">';
             html += '<i class="fas fa-sync"></i> Refresh Prices</button></p>';
             html += '</div>';
@@ -253,22 +253,35 @@ function updateActiveAndRecommendedPositions(positions) {
     }
 }
 
-// Check if recommendation data is stale (>24 hours during market hours)
+// Get the last market close time
+function getLastMarketClose() {
+    const now = new Date();
+    const nowET = new Date(now.toLocaleString('en-US', { timeZone: 'America/New_York' }));
+
+    let lastClose = new Date(nowET);
+    const dayOfWeek = nowET.getDay();
+    const hour = nowET.getHours();
+    const minute = nowET.getMinutes();
+
+    // Market closes at 4:00 PM ET
+    lastClose.setHours(16, 0, 0, 0);
+
+    // If it's before 4 PM today, use yesterday's close
+    if (hour < 16 || (hour === 16 && minute === 0)) {
+        lastClose.setDate(lastClose.getDate() - 1);
+    }
+
+    // If last close was on weekend, roll back to Friday
+    while (lastClose.getDay() === 0 || lastClose.getDay() === 6) {
+        lastClose.setDate(lastClose.getDate() - 1);
+    }
+
+    return lastClose;
+}
+
+// Check if recommendation data is stale (not updated since last market close)
 function checkIfDataStale(positions) {
     if (!positions || positions.length === 0) return false;
-
-    const now = new Date();
-    const dayOfWeek = now.getDay(); // 0 = Sunday, 6 = Saturday
-    const hour = now.getHours();
-
-    // Check if we're during market hours (Mon-Fri, 9:30am-4pm ET)
-    // Note: This is simplified - you'd need to convert to ET properly
-    const isWeekday = dayOfWeek >= 1 && dayOfWeek <= 5;
-    const isDuringMarketHours = hour >= 9 && hour <= 16;
-
-    if (!isWeekday || !isDuringMarketHours) {
-        return false; // Don't show refresh during weekends or after hours
-    }
 
     // Check if any position has stale data
     // A position is stale if Stock_Current is 0/null (means it hasn't been updated)
