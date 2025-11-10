@@ -627,7 +627,7 @@ async function loadTickerList() {
         const data = await response.json();
 
         if (data.success) {
-            displayTickerList(data.tickers);
+            displayTickerList(data.ticker_info || data.tickers);
         }
     } catch (error) {
         console.error('Error loading tickers:', error);
@@ -636,9 +636,14 @@ async function loadTickerList() {
 }
 
 // Display ticker list
-function displayTickerList(tickerList) {
+function displayTickerList(tickerData) {
     const container = document.getElementById('ticker-list');
     const countBadge = document.getElementById('ticker-count');
+
+    // Handle both formats: array of strings or array of objects with ticker info
+    const tickerList = Array.isArray(tickerData) && tickerData.length > 0 && typeof tickerData[0] === 'object'
+        ? tickerData
+        : tickerData.map(t => ({ symbol: t, has_dividend: false, div_yield: 0, div_amount: 0 }));
 
     countBadge.textContent = `${tickerList.length} ticker${tickerList.length !== 1 ? 's' : ''}`;
 
@@ -648,10 +653,20 @@ function displayTickerList(tickerList) {
     }
 
     let html = '<div class="ticker-grid">';
-    tickerList.forEach(ticker => {
+    tickerList.forEach(info => {
+        const ticker = info.symbol;
+        const hasDividend = info.has_dividend;
+        const divYield = info.div_yield || 0;
+        const divAmount = info.div_amount || 0;
+
         html += `
             <div class="ticker-item">
-                <span class="ticker-symbol">${ticker}</span>
+                <span class="ticker-symbol">
+                    ${ticker}
+                    ${hasDividend ? `<i class="fas fa-exclamation-triangle"
+                        style="color: var(--warning-color); font-size: 0.8rem; margin-left: 0.25rem;"
+                        title="Pays dividends: ${divYield.toFixed(2)}% yield, $${divAmount.toFixed(2)}/share"></i>` : ''}
+                </span>
                 <button class="btn-icon-danger" onclick="removeTickerFromList('${ticker}')"
                         title="Remove ${ticker}">
                     <i class="fas fa-trash"></i>
@@ -665,7 +680,7 @@ function displayTickerList(tickerList) {
 }
 
 // Add ticker to watchlist
-async function addTicker() {
+async function addTicker(force = false) {
     const input = document.getElementById('new-ticker-input');
     const ticker = input.value.trim().toUpperCase();
 
@@ -684,17 +699,30 @@ async function addTicker() {
         const response = await fetch('/api/tickers/add', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ ticker: ticker })
+            body: JSON.stringify({ ticker: ticker, force: force })
         });
 
         const data = await response.json();
 
         if (data.success) {
             input.value = '';
-            displayTickerList(data.tickers);
-            // Update global tickers array so scan page will have latest
-            tickers = data.tickers;
+            await loadTickerList();  // Reload to get dividend info
             showToast(`Added ${ticker} to watchlist`, 'success');
+        } else if (data.warning === 'dividend_stock') {
+            // Show dividend warning and ask for confirmation
+            const confirmed = confirm(
+                `⚠️ DIVIDEND WARNING\n\n` +
+                `${ticker} pays dividends:\n` +
+                `• Yield: ${data.div_yield.toFixed(2)}%\n` +
+                `• Amount: $${data.div_amount.toFixed(2)}/share annually\n\n` +
+                `DITM call options do NOT receive dividends, which will reduce your returns.\n\n` +
+                `Add ${ticker} to watchlist anyway?`
+            );
+
+            if (confirmed) {
+                // User confirmed, add with force=true
+                await addTicker(true);
+            }
         } else {
             showToast(data.error || 'Failed to add ticker', 'error');
         }

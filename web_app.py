@@ -402,11 +402,53 @@ def api_docs(doc_name):
 
 @app.route('/api/tickers', methods=['GET'])
 def api_get_tickers():
-    """Get current ticker list."""
+    """Get current ticker list with dividend information."""
     config = load_config()
+    tickers = config.get("tickers", [])
+
+    # Get dividend info for each ticker
+    ticker_info = []
+    try:
+        client = get_schwab_client()
+        for ticker in tickers:
+            try:
+                quote_resp = client.get_quote(ticker)
+                if quote_resp.status_code == 200:
+                    quote_data = quote_resp.json()
+                    fundamental = quote_data.get(ticker, {}).get('fundamental', {})
+                    div_yield = fundamental.get('divYield', 0)
+                    div_amount = fundamental.get('divAmount', 0)
+
+                    ticker_info.append({
+                        "symbol": ticker,
+                        "has_dividend": div_yield > 0,
+                        "div_yield": div_yield,
+                        "div_amount": div_amount
+                    })
+                else:
+                    ticker_info.append({
+                        "symbol": ticker,
+                        "has_dividend": False,
+                        "div_yield": 0,
+                        "div_amount": 0
+                    })
+            except Exception as e:
+                print(f"Error getting dividend info for {ticker}: {e}")
+                ticker_info.append({
+                    "symbol": ticker,
+                    "has_dividend": False,
+                    "div_yield": 0,
+                    "div_amount": 0
+                })
+    except Exception as e:
+        # If client fails, return basic list without dividend info
+        print(f"Error getting Schwab client for dividend info: {e}")
+        ticker_info = [{"symbol": t, "has_dividend": False, "div_yield": 0, "div_amount": 0} for t in tickers]
+
     return jsonify({
         "success": True,
-        "tickers": config.get("tickers", [])
+        "tickers": tickers,  # Keep for backward compatibility
+        "ticker_info": ticker_info
     })
 
 
@@ -416,6 +458,7 @@ def api_add_ticker():
     try:
         data = request.json
         ticker = data.get('ticker', '').upper().strip()
+        force_add = data.get('force', False)  # Allow forcing add despite dividends
 
         if not ticker:
             return jsonify({"success": False, "error": "Ticker symbol required"}), 400
@@ -429,6 +472,32 @@ def api_add_ticker():
 
         if ticker in tickers:
             return jsonify({"success": False, "error": f"{ticker} already in watchlist"}), 400
+
+        # Check for dividends
+        if not force_add:
+            try:
+                client = get_schwab_client()
+                quote_resp = client.get_quote(ticker)
+
+                if quote_resp.status_code == 200:
+                    quote_data = quote_resp.json()
+                    fundamental = quote_data.get(ticker, {}).get('fundamental', {})
+                    div_yield = fundamental.get('divYield', 0)
+                    div_amount = fundamental.get('divAmount', 0)
+
+                    # If stock pays dividends, warn user
+                    if div_yield and div_yield > 0:
+                        return jsonify({
+                            "success": False,
+                            "warning": "dividend_stock",
+                            "div_yield": div_yield,
+                            "div_amount": div_amount,
+                            "message": f"{ticker} pays dividends ({div_yield:.2f}% yield, ${div_amount:.2f}/share annually). "
+                                      f"DITM calls don't receive dividends, which reduces returns. Add anyway?"
+                        })
+            except Exception as e:
+                # If we can't check dividends, allow adding (network error, etc.)
+                print(f"Warning: Could not check dividends for {ticker}: {e}")
 
         tickers.append(ticker)
         config["tickers"] = tickers
