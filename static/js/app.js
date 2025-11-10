@@ -807,6 +807,66 @@ function displayPositionDetail(position, analysis) {
             </div>
         </div>
 
+        <!-- Leverage Analysis -->
+        <div class="detail-section">
+            <h4><i class="fas fa-chart-line"></i> Leverage & Capital Efficiency</h4>
+
+            <div class="info-box" style="margin-bottom: 1rem;">
+                <p><strong><i class="fas fa-lightbulb"></i> Leverage Advantage:</strong>
+                You're controlling ${formatCurrency(analysis.cost_to_buy_shares)} worth of stock exposure
+                for only ${formatCurrency(position.Total_Cost)} invested
+                (${analysis.leverage_ratio.toFixed(2)}x leverage)</p>
+            </div>
+
+            <div class="detail-grid">
+                <div class="detail-item">
+                    <div class="detail-label">Delta</div>
+                    <div class="detail-value">${analysis.delta.toFixed(3)}</div>
+                    <small>Stock-like exposure per contract</small>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">Delta-Adjusted Shares</div>
+                    <div class="detail-value">${Math.round(analysis.delta_adjusted_shares)} shares</div>
+                    <small>${analysis.contracts} contracts × 100 × ${analysis.delta.toFixed(2)} delta</small>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">Cost to Buy Shares</div>
+                    <div class="detail-value">${formatCurrency(analysis.cost_to_buy_shares)}</div>
+                    <small>${Math.round(analysis.delta_adjusted_shares)} shares × ${formatCurrency(analysis.current_stock_price)}</small>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">Leverage Ratio</div>
+                    <div class="detail-value">${analysis.leverage_ratio.toFixed(2)}x</div>
+                    <small>Stock value / Capital invested</small>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">Capital Saved</div>
+                    <div class="detail-value" style="color: var(--success-color);">
+                        ${formatCurrency(analysis.capital_saved)}
+                    </div>
+                    <small>vs. buying ${Math.round(analysis.delta_adjusted_shares)} shares</small>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">Capital Efficiency</div>
+                    <div class="detail-value" style="color: var(--success-color);">
+                        ${analysis.capital_efficiency_pct.toFixed(1)}%
+                    </div>
+                    <small>Savings as % of stock cost</small>
+                </div>
+            </div>
+
+            <div style="margin-top: 1rem; padding: 1rem; background: var(--bg-secondary); border-radius: 8px;">
+                <h5 style="margin: 0 0 0.5rem 0;">What This Means:</h5>
+                <ul style="margin: 0.5rem 0 0 1.5rem; line-height: 1.6;">
+                    <li>You invested <strong>${formatCurrency(position.Total_Cost)}</strong> in options</li>
+                    <li>This controls <strong>${Math.round(analysis.delta_adjusted_shares)} shares</strong> worth of price movement</li>
+                    <li>Buying those shares outright would cost <strong>${formatCurrency(analysis.cost_to_buy_shares)}</strong></li>
+                    <li>You saved <strong>${formatCurrency(analysis.capital_saved)}</strong> (${analysis.capital_efficiency_pct.toFixed(1)}%) by using options</li>
+                    <li>Your leverage is <strong>${analysis.leverage_ratio.toFixed(2)}x</strong> - for every $1 invested, you control $${analysis.leverage_ratio.toFixed(2)} of stock</li>
+                </ul>
+            </div>
+        </div>
+
         <!-- Breakeven Analysis -->
         <div class="detail-section">
             <h4><i class="fas fa-balance-scale"></i> Breakeven Analysis</h4>

@@ -525,6 +525,21 @@ def api_position_detail(ticker, strike, expiration):
         # Compare to just selling the option
         sell_option_profit = current_value - total_cost if current_value > 0 else -total_cost
 
+        # Leverage calculations
+        # Delta-adjusted exposure (how many shares worth of movement you control)
+        delta = pos.get('Delta_Current') or pos.get('Delta_Entry') or 0.85  # Fallback to typical DITM delta
+        delta_adjusted_shares = total_shares_if_exercised * delta
+
+        # Cost to buy equivalent shares outright
+        cost_to_buy_shares = delta_adjusted_shares * current_stock_price
+
+        # Leverage ratio = (Stock value controlled) / (Capital invested)
+        leverage_ratio = cost_to_buy_shares / total_cost if total_cost > 0 else 0
+
+        # Capital efficiency = How much you saved vs buying stock
+        capital_saved = cost_to_buy_shares - total_cost
+        capital_efficiency_pct = (capital_saved / cost_to_buy_shares * 100) if cost_to_buy_shares > 0 else 0
+
         return jsonify({
             "success": True,
             "position": pos,
@@ -553,6 +568,14 @@ def api_position_detail(ticker, strike, expiration):
                 "contracts": int(contracts),
                 "intrinsic_value": max(0, current_stock_price - float(strike)),
                 "time_value": max(0, current_option_price - max(0, current_stock_price - float(strike))),
+
+                # Leverage metrics
+                "delta": delta,
+                "delta_adjusted_shares": delta_adjusted_shares,
+                "cost_to_buy_shares": cost_to_buy_shares,
+                "leverage_ratio": leverage_ratio,
+                "capital_saved": capital_saved,
+                "capital_efficiency_pct": capital_efficiency_pct,
 
                 # Exercise information
                 "exercise_cost": exercise_cost,
