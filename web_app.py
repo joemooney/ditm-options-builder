@@ -611,6 +611,32 @@ def api_position_detail(ticker, strike, expiration):
         capital_saved = cost_to_buy_shares - total_cost
         capital_efficiency_pct = (capital_saved / cost_to_buy_shares * 100) if cost_to_buy_shares > 0 else 0
 
+        # CAGR (Compound Annual Growth Rate) calculation
+        # CAGR = (Ending Value / Beginning Value) ^ (1 / Years) - 1
+        pnl_pct = pos.get('P&L_%') or 0
+
+        # Calculate years held (use days_held if available, otherwise 0)
+        if days_held and days_held > 0:
+            years_held = days_held / 365.25
+
+            # Calculate CAGR
+            # Return = (1 + P&L%)
+            total_return = 1 + (pnl_pct / 100)
+
+            if total_return > 0 and years_held > 0:
+                cagr = (total_return ** (1 / years_held) - 1) * 100
+            else:
+                cagr = 0
+        else:
+            cagr = 0
+            years_held = 0
+
+        # Annualized return (simple, for comparison)
+        if days_held and days_held > 0:
+            annualized_return = (pnl_pct / days_held) * 365.25
+        else:
+            annualized_return = 0
+
         return jsonify({
             "success": True,
             "position": pos,
@@ -647,6 +673,11 @@ def api_position_detail(ticker, strike, expiration):
                 "leverage_ratio": leverage_ratio,
                 "capital_saved": capital_saved,
                 "capital_efficiency_pct": capital_efficiency_pct,
+
+                # Performance metrics
+                "cagr": cagr,
+                "annualized_return": annualized_return,
+                "years_held": years_held,
 
                 # Exercise information
                 "exercise_cost": exercise_cost,

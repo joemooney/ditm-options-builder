@@ -883,6 +883,11 @@ function displayPositionDetail(position, analysis) {
                     <div class="detail-value large">${formatCurrency(pnl)}</div>
                     <small>${formatPercent(pnlPct)}</small>
                 </div>
+                <div class="detail-item ${isProfitable ? 'positive' : 'negative'}">
+                    <div class="detail-label">CAGR</div>
+                    <div class="detail-value">${formatPercent(analysis.cagr)}</div>
+                    <small>Annualized: ${formatPercent(analysis.annualized_return)}</small>
+                </div>
                 <div class="detail-item">
                     <div class="detail-label">Total Invested</div>
                     <div class="detail-value">${formatCurrency(position.Total_Cost)}</div>
