@@ -370,17 +370,142 @@ The amount of profit if you exercised the option right now.
 - Strike at $200
 - Intrinsic Value = $225 - $200 = $25
 
-### Time Value
+### Time Value (Also Called "Extrinsic Value")
 The **extra premium** above intrinsic value, representing potential future profit.
 
+**Note**: Time value and extrinsic value are **the same thing** - just different names used interchangeably in options trading. Some traders prefer "extrinsic" (external to the option's immediate value) while others prefer "time" (because it represents the value of time remaining).
+
 **Formula**: `Time Value = Premium - Intrinsic Value`
+
+**Also written as**: `Extrinsic Value = Premium - Intrinsic Value`
 
 **Example**:
 - Premium: $28
 - Intrinsic: $25
-- Time Value: $3
+- Time Value (Extrinsic Value): $3
 
-**Time decay**: This value decreases as expiration approaches.
+**Time decay (Theta)**: This value decreases as expiration approaches, accelerating in the final 30-60 days.
+
+#### Why Extrinsic Value Matters for DITM Strategy
+
+Understanding extrinsic (time) value is **critical** for DITM trading because it affects:
+
+**1. How Much You're Risking vs. Gaining**
+
+**High Extrinsic Value (Bad for DITM)**:
+```
+Stock: $225
+Strike: $250 (out-of-the-money)
+Premium: $5
+Intrinsic: $0
+Extrinsic: $5 (100% of premium!)
+
+Risk: Entire $5 is time value that will decay to $0
+Benefit: None - purely speculative
+```
+
+**Low Extrinsic Value (Good for DITM)**:
+```
+Stock: $225
+Strike: $200 (deep-in-the-money)
+Premium: $28
+Intrinsic: $25
+Extrinsic: $3 (only 11% of premium)
+
+Risk: Only $3 can decay to $0
+Benefit: $25 is "real value" you can exercise for
+```
+
+**2. Time Decay Impact**
+
+Options lose extrinsic value as expiration approaches (this is "theta decay"):
+
+**Option A - High Extrinsic** (OTM):
+- Today: $5 premium (all extrinsic)
+- 30 days later: $3 premium (losing value fast)
+- At expiration: $0 (lost everything if still OTM)
+- **Lost $5 to time decay**
+
+**Option B - Low Extrinsic** (DITM):
+- Today: $28 premium ($25 intrinsic + $3 extrinsic)
+- 30 days later: $26 premium ($25 intrinsic + $1 extrinsic)
+- At expiration: $25 (intrinsic value remains)
+- **Lost only $3 to time decay**
+
+**3. Why DITM Requires 85%+ Intrinsic Value**
+
+This tool filters for minimum 85% intrinsic value, which means maximum 15% extrinsic:
+
+**85% Intrinsic Example**:
+```
+Premium: $28
+Intrinsic: $23.80 (85%)
+Extrinsic: $4.20 (15%)
+
+Time decay risk: Only 15% of your investment
+Real value protected: 85% can't decay
+```
+
+**50% Intrinsic Example** (Not DITM):
+```
+Premium: $28
+Intrinsic: $14 (50%)
+Extrinsic: $14 (50%)
+
+Time decay risk: Half your investment can decay!
+Real value protected: Only 50%
+```
+
+**4. When You Should Care About Extrinsic Value**
+
+**At Entry** (Buying):
+- ✓ Choose options with LOW extrinsic value (high intrinsic %)
+- ✓ This tool ensures extrinsic is < 15% of premium
+- ✓ Protects you from time decay
+
+**During Hold**:
+- ✓ Monitor as extrinsic value decays over time
+- ✓ Exit before final 30-60 days (when decay accelerates)
+- ✓ Don't worry too much - DITM has minimal extrinsic anyway
+
+**At Exit** (Selling):
+- ✓ Sell option to capture remaining extrinsic value (free money!)
+- ✗ Don't exercise - you lose all extrinsic value
+- Example: Option worth $30 ($25 intrinsic + $5 extrinsic)
+  - Sell: Get $30 (keep the $5 extrinsic) ✓
+  - Exercise: Get $25 worth of stock (lose the $5 extrinsic) ✗
+
+**5. Real-World Example**
+
+You paid $28 for AAPL $200 call (stock at $225):
+- Intrinsic: $25 (this can't decay, it's real stock value)
+- Extrinsic: $3 (this WILL decay to $0 by expiration)
+
+**Scenario: You hold 90 days**:
+- Stock still at $225 (unchanged)
+- Intrinsic still: $25 (unchanged - follows stock)
+- Extrinsic now: $1 (decayed from $3)
+- Option worth: $26 (lost $2 to time decay)
+
+**Scenario: You hold to expiration**:
+- Stock still at $225 (unchanged)
+- Intrinsic: $25 (unchanged)
+- Extrinsic: $0 (fully decayed)
+- Option worth: $25 (lost $3 to time decay)
+
+**The lesson**: Even if stock doesn't move, you lose extrinsic value over time. DITM minimizes this risk by having only 10-15% extrinsic value.
+
+**6. Summary: Why Low Extrinsic Value = Conservative**
+
+| Aspect | High Extrinsic (OTM) | Low Extrinsic (DITM) |
+|--------|---------------------|---------------------|
+| **% of Premium** | 50-100% | 10-15% |
+| **Time Decay Risk** | High | Low |
+| **Real Value** | Little to none | 85-90% |
+| **Needs Stock to Move** | Significantly | Minimally |
+| **Conservative?** | No (speculative) | Yes (stock-like) |
+
+**Bottom line**: Extrinsic value represents the "speculative" part of an option's price. DITM strategy minimizes this by requiring 85%+ intrinsic value, making these options more like stocks (conservative) and less like lottery tickets (speculative).
 
 #### Understanding Time Value as Insurance
 
