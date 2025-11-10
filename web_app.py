@@ -225,33 +225,6 @@ def api_performance():
                 else:
                     risk_metrics[key] = value
 
-        # Portfolio summary - handle None values
-        total_invested = float(df["Total_Cost"].fillna(0).sum())
-        current_value = float(df["Current_Value"].fillna(0).sum())
-        total_pnl = float(df["P&L"].fillna(0).sum())
-
-        # Safe mean calculations
-        avg_return = df["P&L_%"].mean()
-        avg_days = df["Days_Held"].mean()
-
-        # Separate active vs recommended counts
-        active_positions = df[df["Is_Active"] == True]
-        recommended_only = df[(df["Status"] == "open") & (df["Is_Active"] == False)]
-
-        summary = {
-            "total_recommendations": len(df),
-            "active_positions": len(active_positions),
-            "recommended_only": len(recommended_only),
-            "expired_positions": len(df[df["Status"] == "expired"]),
-            "total_invested": total_invested,
-            "current_value": current_value,
-            "total_pnl": total_pnl,
-            "total_pnl_pct": (total_pnl / total_invested * 100) if total_invested > 0 else 0,
-            "win_rate": (len(df[df["P&L"] > 0]) / len(df) * 100) if len(df) > 0 else 0,
-            "avg_return": float(avg_return) if not pd.isna(avg_return) else 0.0,
-            "avg_days_held": float(avg_days) if not pd.isna(avg_days) else 0.0
-        }
-
         # Convert DataFrame to dict with proper type conversion
         positions = df.to_dict('records')
 
@@ -299,6 +272,56 @@ def api_performance():
                 if pos['Current_Value'] > 0 and total_cost > 0:
                     pos['P&L'] = pos['Current_Value'] - total_cost
                     pos['P&L_%'] = (pos['P&L'] / total_cost) * 100
+
+        # Calculate summaries AFTER fixing values
+        # Separate active vs recommended positions
+        active_positions = [p for p in positions if p.get('Is_Active') == True]
+        recommended_only = [p for p in positions if p.get('Status') == 'open' and p.get('Is_Active') == False]
+
+        # Overall summary (all positions)
+        total_invested = sum(p.get('Total_Cost') or 0 for p in positions)
+        current_value = sum(p.get('Current_Value') or 0 for p in positions)
+        total_pnl = sum(p.get('P&L') or 0 for p in positions)
+
+        # Active positions summary
+        active_invested = sum(p.get('Total_Cost') or 0 for p in active_positions)
+        active_value = sum(p.get('Current_Value') or 0 for p in active_positions)
+        active_pnl = sum(p.get('P&L') or 0 for p in active_positions)
+
+        # Recommended only summary (hypothetical)
+        recommended_invested = sum(p.get('Total_Cost') or 0 for p in recommended_only)
+        recommended_value = sum(p.get('Current_Value') or 0 for p in recommended_only)
+        recommended_pnl = sum(p.get('P&L') or 0 for p in recommended_only)
+
+        summary = {
+            "total_recommendations": len(positions),
+            "active_positions": len(active_positions),
+            "recommended_only": len(recommended_only),
+            "expired_positions": len([p for p in positions if p.get('Status') == 'expired']),
+
+            # Overall totals
+            "total_invested": total_invested,
+            "current_value": current_value,
+            "total_pnl": total_pnl,
+            "total_pnl_pct": (total_pnl / total_invested * 100) if total_invested > 0 else 0,
+
+            # Active positions
+            "active_invested": active_invested,
+            "active_value": active_value,
+            "active_pnl": active_pnl,
+            "active_pnl_pct": (active_pnl / active_invested * 100) if active_invested > 0 else 0,
+
+            # Recommended only (hypothetical)
+            "recommended_invested": recommended_invested,
+            "recommended_value": recommended_value,
+            "recommended_pnl": recommended_pnl,
+            "recommended_pnl_pct": (recommended_pnl / recommended_invested * 100) if recommended_invested > 0 else 0,
+
+            # Other metrics
+            "win_rate": (len([p for p in positions if (p.get('P&L') or 0) > 0]) / len(positions) * 100) if len(positions) > 0 else 0,
+            "avg_return": sum(p.get('P&L_%') or 0 for p in positions) / len(positions) if len(positions) > 0 else 0,
+            "avg_days_held": sum(p.get('Days_Held') or 0 for p in positions) / len(positions) if len(positions) > 0 else 0
+        }
 
         return jsonify({
             "success": True,

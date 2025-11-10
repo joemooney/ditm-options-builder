@@ -137,6 +137,7 @@ async function loadDashboard() {
 
 // Update dashboard stats
 function updateDashboardStats(summary) {
+    // Overall stats at top
     document.getElementById('stat-invested').textContent = formatCurrency(summary.total_invested);
     document.getElementById('stat-value').textContent = formatCurrency(summary.current_value);
 
@@ -146,6 +147,24 @@ function updateDashboardStats(summary) {
     pnlElement.className = 'stat-value ' + (summary.total_pnl >= 0 ? 'positive' : 'negative');
 
     document.getElementById('stat-winrate').textContent = formatPercent(summary.win_rate);
+
+    // Active positions stats
+    document.getElementById('stat-active-invested').textContent = formatCurrency(summary.active_invested);
+    document.getElementById('stat-active-value').textContent = formatCurrency(summary.active_value);
+
+    const activePnlElement = document.getElementById('stat-active-pnl');
+    activePnlElement.textContent = formatCurrency(summary.active_pnl) +
+        ` (${formatPercent(summary.active_pnl_pct)})`;
+    activePnlElement.className = 'stat-value ' + (summary.active_pnl >= 0 ? 'positive' : 'negative');
+
+    // Recommended positions stats
+    document.getElementById('stat-recommended-invested').textContent = formatCurrency(summary.recommended_invested);
+    document.getElementById('stat-recommended-value').textContent = formatCurrency(summary.recommended_value);
+
+    const recommendedPnlElement = document.getElementById('stat-recommended-pnl');
+    recommendedPnlElement.textContent = formatCurrency(summary.recommended_pnl) +
+        ` (${formatPercent(summary.recommended_pnl_pct)})`;
+    recommendedPnlElement.className = 'stat-value ' + (summary.recommended_pnl >= 0 ? 'positive' : 'negative');
 }
 
 // Update active and recommended positions tables

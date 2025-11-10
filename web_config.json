@@ -5,7 +5,10 @@
     "GOOGL",
     "NVDA",
     "PLTR",
-    "TSM"
+    "TSM",
+    "COST",
+    "AMZN",
+    "NFLX"
   ],
   "target_capital": 50000,
   "filters": {}

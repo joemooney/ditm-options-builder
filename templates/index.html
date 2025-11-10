@@ -115,6 +115,37 @@
                         <p style="font-size: 0.9rem; color: var(--text-secondary); margin: 0;">Positions you actually hold in your Schwab account</p>
                     </div>
                     <div class="card-body">
+                        <!-- Active Positions Summary -->
+                        <div class="stats-grid" style="margin-bottom: 1.5rem;">
+                            <div class="stat-card">
+                                <div class="stat-icon blue">
+                                    <i class="fas fa-dollar-sign"></i>
+                                </div>
+                                <div class="stat-content">
+                                    <div class="stat-label">Invested</div>
+                                    <div class="stat-value" id="stat-active-invested">$0.00</div>
+                                </div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-icon green">
+                                    <i class="fas fa-arrow-up"></i>
+                                </div>
+                                <div class="stat-content">
+                                    <div class="stat-label">Current Value</div>
+                                    <div class="stat-value" id="stat-active-value">$0.00</div>
+                                </div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-icon purple">
+                                    <i class="fas fa-chart-line"></i>
+                                </div>
+                                <div class="stat-content">
+                                    <div class="stat-label">P&L</div>
+                                    <div class="stat-value" id="stat-active-pnl">$0.00</div>
+                                </div>
+                            </div>
+                        </div>
+
                         <div id="active-positions-table">
                             <p class="text-muted">Loading...</p>
                         </div>
@@ -125,9 +156,40 @@
                 <div class="card">
                     <div class="card-header">
                         <h2><i class="fas fa-lightbulb"></i> Recommended Positions</h2>
-                        <p style="font-size: 0.9rem; color: var(--text-secondary); margin: 0;">Recommendations you haven't opened yet</p>
+                        <p style="font-size: 0.9rem; color: var(--text-secondary); margin: 0;">Recommendations you haven't opened yet (Hypothetical)</p>
                     </div>
                     <div class="card-body">
+                        <!-- Recommended Positions Summary -->
+                        <div class="stats-grid" style="margin-bottom: 1.5rem;">
+                            <div class="stat-card">
+                                <div class="stat-icon blue">
+                                    <i class="fas fa-dollar-sign"></i>
+                                </div>
+                                <div class="stat-content">
+                                    <div class="stat-label">Hypothetical Cost</div>
+                                    <div class="stat-value" id="stat-recommended-invested">$0.00</div>
+                                </div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-icon green">
+                                    <i class="fas fa-arrow-up"></i>
+                                </div>
+                                <div class="stat-content">
+                                    <div class="stat-label">Current Value</div>
+                                    <div class="stat-value" id="stat-recommended-value">$0.00</div>
+                                </div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-icon purple">
+                                    <i class="fas fa-chart-line"></i>
+                                </div>
+                                <div class="stat-content">
+                                    <div class="stat-label">P&L</div>
+                                    <div class="stat-value" id="stat-recommended-pnl">$0.00</div>
+                                </div>
+                            </div>
+                        </div>
+
                         <div id="recommended-positions-table">
                             <p class="text-muted">No data available. Run a scan to get started.</p>
                         </div>
