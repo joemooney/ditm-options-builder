@@ -377,6 +377,10 @@ def find_ditm_calls(client, ticker: str, max_retries: int = 3) -> pd.DataFrame:
                     shares_equiv = delta * 100
                     cost_per_share = mid / shares_equiv if shares_equiv > 0 else 0
 
+                    # ---- extrinsic value (premium above intrinsic) ----
+                    extrinsic = mid - intrinsic  # Time value + volatility premium
+                    extrinsic_pct = extrinsic / mid if mid > 0 else 0
+
                     rows.append({
                         "Expiration": exp_date_str.split(":")[0],
                         "Strike": K,
@@ -386,7 +390,10 @@ def find_ditm_calls(client, ticker: str, max_retries: int = 3) -> pd.DataFrame:
                         "Mid": mid,
                         "IV": sigma,
                         "Delta": delta,
+                        "Intrinsic": intrinsic,
                         "Intrinsic%": intrinsic_pct,
+                        "Extrinsic": extrinsic,
+                        "Extrinsic%": extrinsic_pct,
                         "Cost/Share": cost_per_share,
                         "OI": oi,
                         "Spread%": spread_pct,
@@ -496,11 +503,15 @@ def build_ditm_portfolio(client, tickers: list, target_capital: float = 50000,
         quote_resp = client.get_quote(ticker)
         S = quote_resp.json()[ticker]["quote"]["lastPrice"]
 
-        # Position sizing: Max whole contracts affordable per stock
-        contract_cost = top["Mid"] * 100
-        contracts = int(per_stock_capital / contract_cost)  # Whole contracts only
-        total_cost = contracts * contract_cost
+        # Position sizing: Single contract per ticker
+        contracts = 1
+        contract_cost = top["Ask"] * 100  # Use Ask price (realistic buy price)
         equiv_shares = contracts * top["Delta"] * 100  # Delta-adjusted exposure
+
+        # Calculate extrinsic value (premium "lost" immediately)
+        intrinsic = max(S - top["Strike"], 0)
+        extrinsic = top["Ask"] - intrinsic  # Using Ask price
+        extrinsic_pct = (extrinsic / top["Ask"]) * 100 if top["Ask"] > 0 else 0
 
         # Conservative check: Ensure cost/share < stock price * 0.98
         if top["Cost/Share"] > S * 0.98:
@@ -516,7 +527,9 @@ def build_ditm_portfolio(client, tickers: list, target_capital: float = 50000,
             "Delta": round(top["Delta"], 3),
             "Cost/Share": round(top["Cost/Share"], 2),
             "Contracts": contracts,
-            "Total Cost": round(total_cost, 2),
+            "Contract Cost": round(contract_cost, 2),
+            "Extrinsic Value": round(extrinsic * 100, 2),  # Per contract in dollars
+            "Extrinsic %": round(extrinsic_pct, 2),
             "Equiv Shares": round(equiv_shares),
             "Score": round(top["Score"], 3)
         })
@@ -540,15 +553,15 @@ def build_ditm_portfolio(client, tickers: list, target_capital: float = 50000,
                 spread_pct=top["Spread%"],
                 cost_per_share=top["Cost/Share"],
                 contracts=contracts,
-                total_cost=total_cost,
+                total_cost=contract_cost,  # Using contract_cost (Ask * 100)
                 equiv_shares=equiv_shares,
                 score=top["Score"]
             )
 
     df = pd.DataFrame(portfolio)
     if not df.empty:
-        df["Allocation %"] = (df["Total Cost"] / df["Total Cost"].sum() * 100).round(2)
-        total_cost_port = df["Total Cost"].sum()
+        df["Allocation %"] = (df["Contract Cost"] / df["Contract Cost"].sum() * 100).round(2)
+        total_cost_port = df["Contract Cost"].sum()
         total_equiv = df["Equiv Shares"].sum()
 
         print(f"\n{'=' * 70}")

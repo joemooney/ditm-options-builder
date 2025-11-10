@@ -459,26 +459,34 @@ function displayScanResults(data) {
     html += `<div class="stat-card"><div class="stat-icon green"><i class="fas fa-dollar-sign"></i></div>
              <div class="stat-content"><div class="stat-label">Total Cost</div>
              <div class="stat-value">${formatCurrency(data.summary.total_invested)}</div></div></div>`;
+    html += `<div class="stat-card"><div class="stat-icon orange"><i class="fas fa-exclamation-triangle"></i></div>
+             <div class="stat-content"><div class="stat-label">Total Extrinsic</div>
+             <div class="stat-value">${formatCurrency(data.summary.total_extrinsic)}</div></div></div>`;
     html += `<div class="stat-card"><div class="stat-icon purple"><i class="fas fa-chart-line"></i></div>
              <div class="stat-content"><div class="stat-label">Equiv Shares</div>
              <div class="stat-value">${data.summary.total_equiv_shares.toFixed(0)}</div></div></div>`;
     html += '</div>';
 
+    if (data.info) {
+        html += `<div class="info-box mb-3"><i class="fas fa-info-circle"></i> ${data.info}</div>`;
+    }
+
     if (data.portfolio && data.portfolio.length > 0) {
         html += '<table class="table"><thead><tr>';
         html += '<th>Ticker</th><th>Strike</th><th>Expiration</th><th>DTE</th>';
-        html += '<th>Delta</th><th>Contracts</th><th>Cost</th><th>Score</th>';
+        html += '<th>Delta</th><th>Contract Cost</th><th>Extrinsic $</th><th>Extrinsic %</th><th>Score</th>';
         html += '</tr></thead><tbody>';
 
         data.portfolio.forEach(pos => {
             html += '<tr>';
             html += `<td><strong>${pos.Ticker}</strong></td>`;
-            html += `<td>${pos.Strike}</td>`;
+            html += `<td>$${pos.Strike}</td>`;
             html += `<td>${pos.Expiration}</td>`;
             html += `<td>${pos.DTE}</td>`;
             html += `<td>${pos.Delta.toFixed(3)}</td>`;
-            html += `<td>${pos.Contracts}</td>`;
-            html += `<td>${formatCurrency(pos['Total Cost'])}</td>`;
+            html += `<td>${formatCurrency(pos['Contract Cost'])}</td>`;
+            html += `<td class="negative">${formatCurrency(pos['Extrinsic Value'])}</td>`;
+            html += `<td class="negative">${pos['Extrinsic %'].toFixed(2)}%</td>`;
             html += `<td>${pos.Score.toFixed(3)}</td>`;
             html += '</tr>';
         });

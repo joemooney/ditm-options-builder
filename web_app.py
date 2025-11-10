@@ -128,8 +128,9 @@ def api_scan():
 
         # Calculate summary stats
         summary = {
-            "total_invested": float(portfolio_df["Total Cost"].sum()),
+            "total_invested": float(portfolio_df["Contract Cost"].sum()),
             "total_equiv_shares": float(portfolio_df["Equiv Shares"].sum()),
+            "total_extrinsic": float(portfolio_df["Extrinsic Value"].sum()),
             "num_positions": len(portfolio_df),
             "scan_date": datetime.now().isoformat(),
             "tickers_scanned": len(tickers_to_scan),
