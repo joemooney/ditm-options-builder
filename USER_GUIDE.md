@@ -213,11 +213,69 @@ Number of calendar days until the option expires.
 ### Premium
 The **price you pay** for the option contract.
 
+**Important**: The premium is quoted **per share**, but each contract controls **100 shares**, so you multiply by 100 to get the actual cost.
+
 **Example**: Premium of $25.00 = Cost is $25.00 × 100 = $2,500 per contract
 
-**Components**:
-- **Intrinsic Value**: Amount the option is in-the-money
-- **Time Value**: Extra premium for remaining time
+#### Premium Components Explained
+
+The premium you pay is made up of two parts that add together:
+
+**Formula**: `Premium = Intrinsic Value + Time Value`
+
+Let's use a concrete example to understand this:
+
+**Scenario**:
+- Stock: AAPL trading at $225
+- Option: $200 strike call
+- Premium: $28.00 (the price you see quoted)
+- Days to expiration: 180 days
+
+**Breaking down the $28 premium**:
+
+1. **Intrinsic Value**: $25.00
+   - This is the "real value" if you exercised right now
+   - Formula: Stock Price - Strike Price = $225 - $200 = $25
+   - This is the amount you could profit immediately by exercising
+   - Think of it as the "built-in profit"
+
+2. **Time Value**: $3.00
+   - This is the "extra" you're paying above intrinsic value
+   - Formula: Premium - Intrinsic Value = $28 - $25 = $3
+   - This represents the option's potential to gain more value before expiration
+   - You're paying for 180 days of opportunity for the stock to rise further
+   - This acts as your "insurance premium" (see Time Value section below for details)
+
+**The math**: $25 (intrinsic) + $3 (time) = **$28 total premium**
+
+**Total cost for 1 contract**: $28 × 100 shares = **$2,800**
+
+**Another example** (Out-of-the-money option for comparison):
+
+**Scenario**:
+- Stock: AAPL trading at $225
+- Option: $250 strike call (out-of-the-money)
+- Premium: $5.00
+- Days to expiration: 180 days
+
+**Breaking down the $5 premium**:
+1. **Intrinsic Value**: $0.00
+   - Stock at $225, strike at $250 → No immediate value
+   - Formula: max(0, $225 - $250) = $0
+   - This is a speculative bet, no "real value" yet
+
+2. **Time Value**: $5.00
+   - Formula: $5 premium - $0 intrinsic = $5
+   - You're paying $5 entirely for the hope the stock rises above $250
+   - This is pure speculation (not DITM strategy!)
+
+**The math**: $0 (intrinsic) + $5 (time) = **$5 total premium**
+
+**Why DITM focuses on high intrinsic value**:
+- DITM: $25 intrinsic + $3 time = $28 → **89% intrinsic** (conservative!)
+- OTM: $0 intrinsic + $5 time = $5 → **0% intrinsic** (speculative!)
+
+This tool requires minimum 85% intrinsic value to ensure you're buying "real value" rather than pure speculation.
 
 ### Delta (Δ)
 **Most important metric for DITM trading!**
