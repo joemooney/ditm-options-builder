@@ -436,9 +436,34 @@ def build_ditm_portfolio(client, tickers: list, target_capital: float = 50000,
 
     # Initialize tracker and create scan record
     scan_id = None
+    recent_tickers = {}
     if save_recommendations:
         if tracker is None:
             tracker = RecommendationTracker()
+
+        # Check for tickers with recent open recommendations (within 24 hours)
+        recent_tickers = tracker.get_tickers_with_recent_recommendations(hours=24)
+
+        # Filter out tickers that already have recent recommendations
+        tickers_to_scan = []
+        skipped_tickers = []
+        for ticker in tickers:
+            if ticker in recent_tickers:
+                rec_info = recent_tickers[ticker]
+                skipped_tickers.append(ticker)
+                print(f"\nSkipping {ticker}: Already has open recommendation from {rec_info['recommendation_date'][:19]}")
+                print(f"  Strike: ${rec_info['strike']}, Exp: {rec_info['expiration']}")
+            else:
+                tickers_to_scan.append(ticker)
+
+        if not tickers_to_scan:
+            print("\nAll tickers already have recent open recommendations. No new scan needed.")
+            return pd.DataFrame()
+
+        print(f"\nScanning {len(tickers_to_scan)} ticker(s), skipping {len(skipped_tickers)} with recent recommendations.")
+        tickers = tickers_to_scan
+        num_stocks = len(tickers)
+        per_stock_capital = target_capital / num_stocks
 
         scan_date = datetime.now().isoformat()
         filter_params = {

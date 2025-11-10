@@ -40,6 +40,50 @@ class RecommendationTracker:
         with open(self.db_path, 'w') as f:
             json.dump(self.recommendations, f, indent=2, default=str)
 
+    def get_tickers_with_recent_recommendations(self, hours: int = 24) -> Dict[str, Dict]:
+        """
+        Get tickers that have open recommendations created within the specified time window.
+
+        Args:
+            hours: Number of hours to consider as "recent" (default: 24)
+
+        Returns:
+            Dictionary mapping ticker symbols to their most recent open recommendation info
+            Example: {"AAPL": {"rec_id": "...", "recommendation_date": "...", "scan_id": "..."}}
+        """
+        cutoff_time = datetime.now() - timedelta(hours=hours)
+        recent_tickers = {}
+
+        for rec in self.recommendations.get("recommendations", []):
+            # Only consider open recommendations
+            if rec.get("status") != "open":
+                continue
+
+            ticker = rec.get("ticker")
+            rec_date_str = rec.get("recommendation_date")
+
+            if not ticker or not rec_date_str:
+                continue
+
+            try:
+                rec_date = datetime.fromisoformat(rec_date_str)
+
+                # Check if recommendation is recent (within the time window)
+                if rec_date >= cutoff_time:
+                    # Keep the most recent one for each ticker
+                    if ticker not in recent_tickers or rec_date_str > recent_tickers[ticker]["recommendation_date"]:
+                        recent_tickers[ticker] = {
+                            "rec_id": rec.get("id"),
+                            "recommendation_date": rec_date_str,
+                            "scan_id": rec.get("scan_id"),
+                            "strike": rec.get("strike"),
+                            "expiration": rec.get("expiration")
+                        }
+            except (ValueError, TypeError):
+                continue
+
+        return recent_tickers
+
     def record_scan(self, scan_date: str, tickers: List[str],
                     target_capital: float, filter_params: Dict):
         """

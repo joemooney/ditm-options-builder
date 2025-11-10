@@ -94,6 +94,11 @@ def api_scan():
         # Initialize Schwab client
         client = get_schwab_client()
 
+        # Check which tickers already have recent recommendations
+        recent_tickers = tracker.get_tickers_with_recent_recommendations(hours=24)
+        skipped_tickers = [t for t in tickers if t in recent_tickers]
+        tickers_to_scan = [t for t in tickers if t not in recent_tickers]
+
         # Run scan with tracking
         portfolio_df = build_ditm_portfolio(
             client,
@@ -104,10 +109,19 @@ def api_scan():
         )
 
         if portfolio_df.empty:
-            return jsonify({
-                "success": False,
-                "message": "No qualifying options found"
-            })
+            # Provide specific message if all tickers were skipped
+            if len(skipped_tickers) == len(tickers):
+                return jsonify({
+                    "success": False,
+                    "message": "All tickers already have recent open recommendations (within 24 hours). No new scan needed.",
+                    "skipped_tickers": skipped_tickers
+                })
+            else:
+                return jsonify({
+                    "success": False,
+                    "message": "No qualifying options found",
+                    "skipped_tickers": skipped_tickers
+                })
 
         # Convert to JSON-serializable format
         portfolio_dict = portfolio_df.to_dict('records')
@@ -117,14 +131,23 @@ def api_scan():
             "total_invested": float(portfolio_df["Total Cost"].sum()),
             "total_equiv_shares": float(portfolio_df["Equiv Shares"].sum()),
             "num_positions": len(portfolio_df),
-            "scan_date": datetime.now().isoformat()
+            "scan_date": datetime.now().isoformat(),
+            "tickers_scanned": len(tickers_to_scan),
+            "tickers_skipped": len(skipped_tickers)
         }
 
-        return jsonify({
+        response = {
             "success": True,
             "portfolio": portfolio_dict,
             "summary": summary
-        })
+        }
+
+        # Include info about skipped tickers if any
+        if skipped_tickers:
+            response["info"] = f"Skipped {len(skipped_tickers)} ticker(s) with recent recommendations: {', '.join(skipped_tickers)}"
+            response["skipped_tickers"] = skipped_tickers
+
+        return jsonify(response)
 
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500
