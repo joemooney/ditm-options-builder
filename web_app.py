@@ -29,6 +29,29 @@ load_dotenv()
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.urandom(24)
 
+
+def clean_for_json(obj):
+    """
+    Recursively clean an object for JSON serialization.
+    Converts NaN, Infinity, and None to appropriate values.
+    """
+    if isinstance(obj, dict):
+        return {k: clean_for_json(v) for k, v in obj.items()}
+    elif isinstance(obj, list):
+        return [clean_for_json(item) for item in obj]
+    elif isinstance(obj, (np.integer, np.floating)):
+        if np.isnan(obj) or np.isinf(obj):
+            return 0
+        return float(obj) if isinstance(obj, np.floating) else int(obj)
+    elif isinstance(obj, float):
+        if np.isnan(obj) or np.isinf(obj):
+            return 0
+        return obj
+    elif pd.isna(obj):
+        return None
+    else:
+        return obj
+
 # Global tracker instance
 tracker = RecommendationTracker()
 
@@ -585,7 +608,7 @@ def api_position_detail(ticker, strike, expiration):
         if position.empty:
             return jsonify({"success": False, "error": "Position not found"}), 404
 
-        pos = position.iloc[0].to_dict()
+        pos = clean_for_json(position.iloc[0].to_dict())
 
         # Get stock price - fetch fresh if not available
         current_stock_price = pos.get('Stock_Current') or pos.get('Current_Stock_Price')

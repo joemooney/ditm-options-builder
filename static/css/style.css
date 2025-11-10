@@ -827,6 +827,12 @@ small {
     transform: translateX(-50%) translateY(-0.25rem);
 }
 
+/* Ensure table headers can show tooltips */
+th {
+    position: relative;
+    overflow: visible;
+}
+
 /* Modal */
 .modal {
     position: fixed;
