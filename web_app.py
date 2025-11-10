@@ -146,6 +146,14 @@ def api_scan():
         # Convert to JSON-serializable format
         portfolio_dict = portfolio_df.to_dict('records')
 
+        # Automatically update prices for all newly created recommendations
+        # This prevents the "stale data" warning from appearing immediately after scan
+        try:
+            tracker.update_all_open_recommendations(client)
+        except Exception as e:
+            print(f"Warning: Could not auto-update prices after scan: {e}")
+            # Continue anyway - not a critical failure
+
         # Calculate summary stats
         summary = {
             "total_invested": float(portfolio_df["Contract Cost"].sum()),
