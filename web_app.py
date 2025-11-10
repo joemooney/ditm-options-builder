@@ -752,6 +752,33 @@ def api_position_detail(ticker, strike, expiration):
         else:
             annualized_return = 0
 
+        # Stock comparison: What if bought stock instead?
+        entry_stock_price = pos.get('Stock_Entry') or current_stock_price
+        if entry_stock_price > 0 and total_cost > 0:
+            # How many shares could we have bought with the same capital?
+            shares_could_have_bought = total_cost / entry_stock_price
+
+            # What would those shares be worth now?
+            stock_position_value = shares_could_have_bought * current_stock_price
+
+            # P&L if we had bought stock instead
+            stock_pnl = stock_position_value - total_cost
+            stock_pnl_pct = (stock_pnl / total_cost * 100) if total_cost > 0 else 0
+
+            # Comparison: Option P&L vs Stock P&L
+            option_pnl = pos.get('P&L') or (current_value - total_cost)
+            option_pnl_pct = pos.get('P&L_%') or 0
+
+            option_outperformance = option_pnl - stock_pnl
+            option_outperformance_pct = option_pnl_pct - stock_pnl_pct
+        else:
+            shares_could_have_bought = 0
+            stock_position_value = 0
+            stock_pnl = 0
+            stock_pnl_pct = 0
+            option_outperformance = 0
+            option_outperformance_pct = 0
+
         return jsonify({
             "success": True,
             "position": pos,
@@ -798,6 +825,15 @@ def api_position_detail(ticker, strike, expiration):
                 "cagr": cagr,
                 "annualized_return": annualized_return,
                 "years_held": years_held,
+
+                # Stock comparison (what if bought stock instead?)
+                "entry_stock_price": entry_stock_price,
+                "shares_could_have_bought": shares_could_have_bought,
+                "stock_position_value": stock_position_value,
+                "stock_pnl": stock_pnl,
+                "stock_pnl_pct": stock_pnl_pct,
+                "option_outperformance": option_outperformance,
+                "option_outperformance_pct": option_outperformance_pct,
 
                 # Exercise information
                 "exercise_cost": exercise_cost,

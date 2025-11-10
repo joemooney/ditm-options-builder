@@ -190,11 +190,41 @@ function updateActiveAndRecommendedPositions(positions) {
         html += `<th>Total Cost ${tooltip("Total amount invested in this position (contract cost × quantity × 100).")}</th>`;
         html += `<th>Value ${tooltip("Current market value of the position. Updated from Schwab account.")}</th>`;
         html += `<th>P&L ${tooltip("Profit/Loss: Current Value - Total Cost. Shows both dollar amount and percentage. See User Guide for details.")}</th>`;
+        html += `<th>Stock P&L ${tooltip("Hypothetical profit/loss if you had bought stock instead with the same capital. Comparison shows how option performs vs simple stock purchase. See User Guide for details.")}</th>`;
+        html += `<th>Option vs Stock ${tooltip("How much better (or worse) the option is performing compared to buying stock. Positive = option winning, Negative = stock would be better. See User Guide for details.")}</th>`;
         html += '</tr></thead><tbody>';
 
         activePositions.forEach(pos => {
             const pnlClass = pos['P&L'] >= 0 ? 'positive' : 'negative';
             const extrinsicClass = 'negative'; // Extrinsic is always a "cost"
+
+            // Stock comparison calculations
+            const entryStockPrice = pos.Stock_Entry || 0;
+            const currentStockPrice = pos.Stock_Current || 0;
+            const totalCost = pos.Total_Cost || 0;
+            let stockPnl = 0;
+            let stockPnlPct = 0;
+            let optionOutperformance = 0;
+            let optionOutperformancePct = 0;
+
+            if (entryStockPrice > 0 && currentStockPrice > 0 && totalCost > 0) {
+                // Shares we could have bought with same capital
+                const sharesCould = totalCost / entryStockPrice;
+                // What those shares would be worth now
+                const stockValue = sharesCould * currentStockPrice;
+                // Stock P&L
+                stockPnl = stockValue - totalCost;
+                stockPnlPct = (stockPnl / totalCost) * 100;
+                // Option outperformance
+                const optionPnl = pos['P&L'] || 0;
+                const optionPnlPct = pos['P&L_%'] || 0;
+                optionOutperformance = optionPnl - stockPnl;
+                optionOutperformancePct = optionPnlPct - stockPnlPct;
+            }
+
+            const stockPnlClass = stockPnl >= 0 ? 'positive' : 'negative';
+            const outperformanceClass = optionOutperformance >= 0 ? 'positive' : 'negative';
+
             html += `<tr class="clickable-row" onclick="showPositionDetail('${pos.Ticker}', '${pos.Strike}', '${pos.Expiration}')" style="cursor: pointer;">`;
             html += `<td><strong>${pos.Ticker}</strong></td>`;
             html += `<td>${pos.Strike}</td>`;
@@ -207,6 +237,16 @@ function updateActiveAndRecommendedPositions(positions) {
             html += `<td>${formatCurrency(pos.Total_Cost || 0)}</td>`;
             html += `<td>${formatCurrency(pos.Current_Value || 0)}</td>`;
             html += `<td class="${pnlClass}">${formatCurrency(pos['P&L'] || 0)} (${formatPercent(pos['P&L_%'] || 0)})</td>`;
+
+            // Stock comparison columns
+            if (entryStockPrice > 0 && currentStockPrice > 0) {
+                html += `<td class="${stockPnlClass}">${formatCurrency(stockPnl)} (${formatPercent(stockPnlPct)})</td>`;
+                html += `<td class="${outperformanceClass}">${formatCurrency(optionOutperformance)} (${formatPercent(optionOutperformancePct)})</td>`;
+            } else {
+                html += `<td class="text-muted">N/A</td>`;
+                html += `<td class="text-muted">N/A</td>`;
+            }
+
             html += '</tr>';
         });
 
@@ -243,6 +283,7 @@ function updateActiveAndRecommendedPositions(positions) {
         html += `<th>Contract Cost ${tooltip("Cost per contract (100 shares). Uses Ask price (realistic buy price).")}</th>`;
         html += `<th>Immediate Loss $ ${tooltip("Total immediate loss per contract if bought and sold right away: includes time value (extrinsic) + bid-ask spread. This must be recouped to break-even. Lower is better. See User Guide for details.")}</th>`;
         html += `<th>Immediate Loss % ${tooltip("Immediate loss as % of contract cost. Shows total percentage at risk from time decay and spread. Lower % = more conservative. See User Guide for details.")}</th>`;
+        html += `<th>Stock Move ${tooltip("How much the stock has moved since this recommendation was made. Shows whether waiting has helped or hurt. See User Guide for details.")}</th>`;
         html += `<th>Delta ${tooltip("How much the option price moves per $1 stock move. 85% means option gains ~85¢ when stock gains $1. See User Guide for details.")}</th>`;
         html += `<th>IV ${tooltip("Implied Volatility at entry. Higher IV = more expensive options, more risk. DITM strategy prefers <30%. See User Guide for details.")}</th>`;
         html += `<th>Score ${tooltip("Composite score ranking options. Lower score = more conservative. See User Guide for details.")}</th>`;
@@ -252,8 +293,19 @@ function updateActiveAndRecommendedPositions(positions) {
         recommendedPositions.slice(0, 10).forEach(pos => {
             // Determine which stock price to show (current if available, otherwise entry)
             const stockPrice = pos.Stock_Current || pos.Stock_Entry || 0;
+            const entryStockPrice = pos.Stock_Entry || 0;
             const isStale = !pos.Stock_Current || pos.Stock_Current === 0;
             const extrinsicClass = 'negative'; // Extrinsic is always a "cost"
+
+            // Calculate stock move since recommendation
+            let stockMoveDollars = 0;
+            let stockMovePct = 0;
+            let stockMoveClass = '';
+            if (entryStockPrice > 0 && stockPrice > 0 && stockPrice !== entryStockPrice) {
+                stockMoveDollars = stockPrice - entryStockPrice;
+                stockMovePct = (stockMoveDollars / entryStockPrice) * 100;
+                stockMoveClass = stockMoveDollars >= 0 ? 'positive' : 'negative';
+            }
 
             html += `<tr class="clickable-row">`;
             html += `<td onclick="showPositionDetail('${pos.Ticker}', '${pos.Strike}', '${pos.Expiration}')" style="cursor: pointer;"><strong>${pos.Ticker}</strong></td>`;
@@ -269,6 +321,16 @@ function updateActiveAndRecommendedPositions(positions) {
             html += `<td onclick="showPositionDetail('${pos.Ticker}', '${pos.Strike}', '${pos.Expiration}')" style="cursor: pointer;">${formatCurrency(pos.Contract_Cost || 0)}</td>`;
             html += `<td onclick="showPositionDetail('${pos.Ticker}', '${pos.Strike}', '${pos.Expiration}')" style="cursor: pointer;" class="${extrinsicClass}">${formatCurrency(pos.Extrinsic_Value || 0)}</td>`;
             html += `<td onclick="showPositionDetail('${pos.Ticker}', '${pos.Strike}', '${pos.Expiration}')" style="cursor: pointer;" class="${extrinsicClass}">${formatPercent(pos.Extrinsic_Pct || 0)}</td>`;
+
+            // Stock move column
+            if (stockMoveDollars !== 0) {
+                html += `<td onclick="showPositionDetail('${pos.Ticker}', '${pos.Strike}', '${pos.Expiration}')" style="cursor: pointer;" class="${stockMoveClass}">`;
+                html += `${stockMoveDollars >= 0 ? '+' : ''}${formatCurrency(stockMoveDollars)} (${stockMovePct >= 0 ? '+' : ''}${formatPercent(stockMovePct)})`;
+                html += `</td>`;
+            } else {
+                html += `<td onclick="showPositionDetail('${pos.Ticker}', '${pos.Strike}', '${pos.Expiration}')" style="cursor: pointer;" class="text-muted">-</td>`;
+            }
+
             html += `<td onclick="showPositionDetail('${pos.Ticker}', '${pos.Strike}', '${pos.Expiration}')" style="cursor: pointer;">${formatPercent(pos.Delta_Entry * 100)}</td>`;
             html += `<td onclick="showPositionDetail('${pos.Ticker}', '${pos.Strike}', '${pos.Expiration}')" style="cursor: pointer;">${formatPercent((pos.IV_Entry || 0) * 100)}</td>`;
             html += `<td onclick="showPositionDetail('${pos.Ticker}', '${pos.Strike}', '${pos.Expiration}')" style="cursor: pointer;">${(pos.Score || 0).toFixed(3)}</td>`;
@@ -1006,6 +1068,55 @@ function displayPositionDetail(position, analysis) {
                     <div class="detail-label">Days Held</div>
                     <div class="detail-value">${analysis.days_held}</div>
                     <small>${analysis.days_to_expiration} DTE remaining</small>
+                </div>
+            </div>
+        </div>
+
+        <!-- Stock Comparison: Option vs Stock -->
+        <div class="detail-section">
+            <h4><i class="fas fa-balance-scale"></i> Stock Comparison: Option vs Buying Stock</h4>
+
+            <div class="info-box" style="margin-bottom: 1rem;">
+                <p><strong><i class="fas fa-lightbulb"></i> What if you bought stock instead?</strong>
+                With the same ${formatCurrency(position.Total_Cost)} invested, you could have bought
+                ${analysis.shares_could_have_bought.toFixed(2)} shares at ${formatCurrency(analysis.entry_stock_price)}/share.
+                That would be worth ${formatCurrency(analysis.stock_position_value)} today.</p>
+            </div>
+
+            <div class="detail-grid">
+                <div class="detail-item">
+                    <div class="detail-label">Stock Entry Price</div>
+                    <div class="detail-value">${formatCurrency(analysis.entry_stock_price)}</div>
+                    <small>Price when you bought the option</small>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">Shares You Could've Bought</div>
+                    <div class="detail-value">${analysis.shares_could_have_bought.toFixed(2)}</div>
+                    <small>${formatCurrency(position.Total_Cost)} ÷ ${formatCurrency(analysis.entry_stock_price)}</small>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">Stock Position Value Today</div>
+                    <div class="detail-value">${formatCurrency(analysis.stock_position_value)}</div>
+                    <small>${analysis.shares_could_have_bought.toFixed(2)} shares × ${formatCurrency(analysis.current_stock_price)}</small>
+                </div>
+                <div class="detail-item ${analysis.stock_pnl >= 0 ? 'positive' : 'negative'}">
+                    <div class="detail-label">Stock P&L (Hypothetical)</div>
+                    <div class="detail-value">${formatCurrency(analysis.stock_pnl)}</div>
+                    <small>${formatPercent(analysis.stock_pnl_pct)}</small>
+                </div>
+                <div class="detail-item ${analysis.option_outperformance >= 0 ? 'positive' : 'negative'}">
+                    <div class="detail-label">Option Outperformance</div>
+                    <div class="detail-value">${formatCurrency(analysis.option_outperformance)}</div>
+                    <small>${formatPercent(analysis.option_outperformance_pct)} ${analysis.option_outperformance >= 0 ? 'better' : 'worse'} than stock</small>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">Performance Summary</div>
+                    <div class="detail-value" style="font-size: 0.9rem;">
+                        ${analysis.option_outperformance >= 0
+                            ? '<span class="positive">✓ Option is winning</span>'
+                            : '<span class="negative">✗ Stock would be better</span>'}
+                    </div>
+                    <small>Option: ${formatPercent(pnlPct)} vs Stock: ${formatPercent(analysis.stock_pnl_pct)}</small>
                 </div>
             </div>
         </div>
