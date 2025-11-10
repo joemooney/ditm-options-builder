@@ -5,6 +5,11 @@ let currentPage = 'dashboard';
 let config = null;
 let tickers = [];
 
+// Helper function to create tooltip icon HTML
+function tooltip(text) {
+    return `<span data-tooltip="${text}"><i class="fas fa-info-circle tooltip-icon"></i></span>`;
+}
+
 // Theme Management
 function initializeTheme() {
     // Get saved theme or default to dark
@@ -175,12 +180,12 @@ function updateActiveAndRecommendedPositions(positions) {
     } else {
         let html = '<table class="table"><thead><tr>';
         html += '<th>Ticker</th>';
-        html += '<th>Strike <i class="fas fa-info-circle tooltip-icon" data-tooltip="Strike price of the call option. You have the right to buy stock at this price."></i></th>';
-        html += '<th>Expiration <i class="fas fa-info-circle tooltip-icon" data-tooltip="Option expiration date. After this date, the option becomes worthless."></i></th>';
-        html += '<th>DTE <i class="fas fa-info-circle tooltip-icon" data-tooltip="Days to Expiration. More days = less time decay risk. See User Guide."></i></th>';
-        html += '<th>Cost <i class="fas fa-info-circle tooltip-icon" data-tooltip="Total cost paid for this position (contract cost × quantity)."></i></th>';
-        html += '<th>Value <i class="fas fa-info-circle tooltip-icon" data-tooltip="Current market value of the position. Updated from Schwab account."></i></th>';
-        html += '<th>P&L <i class="fas fa-info-circle tooltip-icon" data-tooltip="Profit/Loss: Current Value - Cost. Shows both dollar amount and percentage. See User Guide."></i></th>';
+        html += `<th>Strike ${tooltip("Strike price of the call option. You have the right to buy stock at this price.")}</th>`;
+        html += `<th>Expiration ${tooltip("Option expiration date. After this date, the option becomes worthless.")}</th>`;
+        html += `<th>DTE ${tooltip("Days to Expiration. More days = less time decay risk. See User Guide for details.")}</th>`;
+        html += `<th>Cost ${tooltip("Total cost paid for this position (contract cost × quantity).")}</th>`;
+        html += `<th>Value ${tooltip("Current market value of the position. Updated from Schwab account.")}</th>`;
+        html += `<th>P&L ${tooltip("Profit/Loss: Current Value - Cost. Shows both dollar amount and percentage. See User Guide for details.")}</th>`;
         html += '</tr></thead><tbody>';
 
         activePositions.forEach(pos => {
@@ -222,14 +227,14 @@ function updateActiveAndRecommendedPositions(positions) {
 
         html += '<table class="table"><thead><tr>';
         html += '<th>Ticker</th>';
-        html += '<th>Stock Price <i class="fas fa-info-circle tooltip-icon" data-tooltip="Current stock price. Stale data shows warning icon."></i></th>';
-        html += '<th>Strike <i class="fas fa-info-circle tooltip-icon" data-tooltip="Strike price of the call option. You have the right to buy stock at this price."></i></th>';
-        html += '<th>Expiration <i class="fas fa-info-circle tooltip-icon" data-tooltip="Option expiration date. After this date, the option becomes worthless."></i></th>';
-        html += '<th>DTE <i class="fas fa-info-circle tooltip-icon" data-tooltip="Days to Expiration. More days = less time decay risk. See User Guide."></i></th>';
-        html += '<th>Cost/Share <i class="fas fa-info-circle tooltip-icon" data-tooltip="Effective cost per share of stock exposure. Lower than stock price = leverage advantage. See User Guide."></i></th>';
-        html += '<th>Delta <i class="fas fa-info-circle tooltip-icon" data-tooltip="How much the option price moves per $1 stock move. 85% means option gains ~85¢ when stock gains $1. See User Guide."></i></th>';
-        html += '<th>IV <i class="fas fa-info-circle tooltip-icon" data-tooltip="Implied Volatility at entry. Higher IV = more expensive options, more risk. DITM strategy prefers <30%. See User Guide."></i></th>';
-        html += '<th>Score <i class="fas fa-info-circle tooltip-icon" data-tooltip="Composite score ranking options. Lower score = more conservative. See User Guide."></i></th>';
+        html += `<th>Stock Price ${tooltip("Current stock price. Stale data shows warning icon.")}</th>`;
+        html += `<th>Strike ${tooltip("Strike price of the call option. You have the right to buy stock at this price.")}</th>`;
+        html += `<th>Expiration ${tooltip("Option expiration date. After this date, the option becomes worthless.")}</th>`;
+        html += `<th>DTE ${tooltip("Days to Expiration. More days = less time decay risk. See User Guide for details.")}</th>`;
+        html += `<th>Cost/Share ${tooltip("Effective cost per share of stock exposure. Lower than stock price = leverage advantage. See User Guide for details.")}</th>`;
+        html += `<th>Delta ${tooltip("How much the option price moves per $1 stock move. 85% means option gains ~85¢ when stock gains $1. See User Guide for details.")}</th>`;
+        html += `<th>IV ${tooltip("Implied Volatility at entry. Higher IV = more expensive options, more risk. DITM strategy prefers <30%. See User Guide for details.")}</th>`;
+        html += `<th>Score ${tooltip("Composite score ranking options. Lower score = more conservative. See User Guide for details.")}</th>`;
         html += '<th></th>';
         html += '</tr></thead><tbody>';
 
@@ -487,14 +492,14 @@ function displayScanResults(data) {
     if (data.portfolio && data.portfolio.length > 0) {
         html += '<table class="table"><thead><tr>';
         html += '<th>Ticker</th>';
-        html += '<th>Strike <i class="fas fa-info-circle tooltip-icon" data-tooltip="Strike price of the call option. You have the right to buy stock at this price."></i></th>';
-        html += '<th>Expiration <i class="fas fa-info-circle tooltip-icon" data-tooltip="Option expiration date. After this date, the option becomes worthless."></i></th>';
-        html += '<th>DTE <i class="fas fa-info-circle tooltip-icon" data-tooltip="Days to Expiration. More days = less time decay risk. See User Guide for details."></i></th>';
-        html += '<th>Delta <i class="fas fa-info-circle tooltip-icon" data-tooltip="How much the option price moves per $1 stock move. 0.85 delta means option gains ~85¢ when stock gains $1. Higher = more stock-like. See User Guide."></i></th>';
-        html += '<th>Contract Cost <i class="fas fa-info-circle tooltip-icon" data-tooltip="Cost to purchase one contract (100 shares). Uses Ask price (realistic buy price)."></i></th>';
-        html += '<th>Extrinsic $ <i class="fas fa-info-circle tooltip-icon" data-tooltip="Premium above intrinsic value (time value). This amount would be \'lost\' if bought and sold immediately. Lower is better. See User Guide."></i></th>';
-        html += '<th>Extrinsic % <i class="fas fa-info-circle tooltip-icon" data-tooltip="Extrinsic value as % of option price. Lower % = more conservative, less exposed to time decay. DITM typically <15%. See User Guide."></i></th>';
-        html += '<th>Score <i class="fas fa-info-circle tooltip-icon" data-tooltip="Composite score ranking options. Lower score = more conservative. Considers delta, intrinsic %, IV, and spread."></i></th>';
+        html += `<th>Strike ${tooltip("Strike price of the call option. You have the right to buy stock at this price.")}</th>`;
+        html += `<th>Expiration ${tooltip("Option expiration date. After this date, the option becomes worthless.")}</th>`;
+        html += `<th>DTE ${tooltip("Days to Expiration. More days = less time decay risk. See User Guide for details.")}</th>`;
+        html += `<th>Delta ${tooltip("How much the option price moves per $1 stock move. 0.85 delta means option gains ~85¢ when stock gains $1. Higher = more stock-like. See User Guide for details.")}</th>`;
+        html += `<th>Contract Cost ${tooltip("Cost to purchase one contract (100 shares). Uses Ask price (realistic buy price).")}</th>`;
+        html += `<th>Extrinsic $ ${tooltip("Premium above intrinsic value (time value). This amount would be 'lost' if bought and sold immediately. Lower is better. See User Guide for details.")}</th>`;
+        html += `<th>Extrinsic % ${tooltip("Extrinsic value as % of option price. Lower % = more conservative, less exposed to time decay. DITM typically <15%. See User Guide for details.")}</th>`;
+        html += `<th>Score ${tooltip("Composite score ranking options. Lower score = more conservative. Considers delta, intrinsic %, IV, and spread. See User Guide for details.")}</th>`;
         html += '</tr></thead><tbody>';
 
         data.portfolio.forEach(pos => {
