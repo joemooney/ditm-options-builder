@@ -265,6 +265,21 @@ def api_performance():
                 elif isinstance(value, (np.floating, np.float64)):
                     pos[key] = float(value)
 
+            # Fix Total_Cost if it's 0 for new positions
+            total_cost = pos.get('Total_Cost') or 0
+            if total_cost == 0 and pos.get('Status') == 'open':
+                entry_ask = pos.get('Entry_Ask') or 0
+                entry_mid = pos.get('Entry_Mid') or pos.get('Entry_Price') or 0
+                contracts = pos.get('Contracts') or 1
+
+                # Calculate total cost (what you paid to buy)
+                if entry_ask > 0:
+                    total_cost = entry_ask * contracts * 100
+                    pos['Total_Cost'] = total_cost
+                elif entry_mid > 0:
+                    total_cost = entry_mid * contracts * 100
+                    pos['Total_Cost'] = total_cost
+
             # Fix Current_Value if it's 0 for new positions
             current_value = pos.get('Current_Value') or 0
             if current_value == 0 and pos.get('Status') == 'open':
@@ -281,11 +296,9 @@ def api_performance():
                     pos['Current_Value'] = entry_mid * contracts * 100
 
                 # Recalculate P&L based on new current value
-                if pos['Current_Value'] > 0:
-                    total_cost = pos.get('Total_Cost') or 0
+                if pos['Current_Value'] > 0 and total_cost > 0:
                     pos['P&L'] = pos['Current_Value'] - total_cost
-                    if total_cost > 0:
-                        pos['P&L_%'] = (pos['P&L'] / total_cost) * 100
+                    pos['P&L_%'] = (pos['P&L'] / total_cost) * 100
 
         return jsonify({
             "success": True,
