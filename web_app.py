@@ -767,7 +767,11 @@ def api_position_detail(ticker, strike, expiration):
 
             # Comparison: Option P&L vs Stock P&L
             option_pnl = pos.get('P&L') or (current_value - total_cost)
-            option_pnl_pct = pos.get('P&L_%') or 0
+            # Calculate option P&L % if not available
+            if pos.get('P&L_%') is not None:
+                option_pnl_pct = pos.get('P&L_%')
+            else:
+                option_pnl_pct = (option_pnl / total_cost * 100) if total_cost > 0 else 0
 
             option_outperformance = option_pnl - stock_pnl
             option_outperformance_pct = option_pnl_pct - stock_pnl_pct
