@@ -946,23 +946,31 @@ function displayPositionDetail(position, analysis) {
 
             ${(() => {
                 const dte = analysis.days_to_expiration;
-                let boxClass = 'warning-box';
+                let boxClass = 'info-box';
+                let iconClass = 'fa-info-circle';
+                let titleText = 'Auto-Exercise Information';
                 let urgencyText = '';
 
                 if (dte <= 7) {
                     boxClass = 'danger-box';
+                    iconClass = 'fa-exclamation-triangle';
+                    titleText = 'Auto-Exercise Warning';
                     urgencyText = '<strong style="color: #dc3545;">⚠️ URGENT - EXPIRING IN ' + dte + ' DAYS!</strong><br>';
                 } else if (dte <= 14) {
                     boxClass = 'danger-box';
+                    iconClass = 'fa-exclamation-triangle';
+                    titleText = 'Auto-Exercise Warning';
                     urgencyText = '<strong style="color: #dc3545;">⚠️ WARNING - EXPIRING IN ' + dte + ' DAYS!</strong><br>';
                 } else if (dte <= 30) {
                     boxClass = 'warning-box';
+                    iconClass = 'fa-exclamation-triangle';
+                    titleText = 'Auto-Exercise Notice';
                     urgencyText = '<strong style="color: #ff9800;">⏰ NOTICE - EXPIRING IN ' + dte + ' DAYS</strong><br>';
                 }
 
                 return `
             <div class="${boxClass}" style="margin-top: 1rem;">
-                <p><strong><i class="fas fa-exclamation-triangle"></i> Auto-Exercise Warning (${dte} DTE):</strong></p>
+                <p><strong><i class="fas ${iconClass}"></i> ${titleText} (${dte} DTE):</strong></p>
                 ${urgencyText ? '<p style="margin: 0.5rem 0;">' + urgencyText + '</p>' : ''}
                 <ul style="margin: 0.5rem 0 0 1.5rem;">
                     <li>If you don't sell or exercise before expiration, and the option is in-the-money, it will be <strong>automatically exercised</strong></li>
