@@ -255,7 +255,7 @@ def api_performance():
         # Convert DataFrame to dict with proper type conversion
         positions = df.to_dict('records')
 
-        # Convert numpy/pandas types to Python native types
+        # Convert numpy/pandas types to Python native types and fix zero current values
         for pos in positions:
             for key, value in pos.items():
                 if pd.isna(value):
@@ -264,6 +264,28 @@ def api_performance():
                     pos[key] = int(value)
                 elif isinstance(value, (np.floating, np.float64)):
                     pos[key] = float(value)
+
+            # Fix Current_Value if it's 0 for new positions
+            current_value = pos.get('Current_Value') or 0
+            if current_value == 0 and pos.get('Status') == 'open':
+                # Use entry bid price as realistic current value (what you'd get if selling immediately)
+                entry_bid = pos.get('Entry_Bid') or 0
+                entry_mid = pos.get('Entry_Mid') or pos.get('Entry_Price') or 0
+                contracts = pos.get('Contracts') or 1
+
+                if entry_bid > 0:
+                    # Use bid price (realistic sell price)
+                    pos['Current_Value'] = entry_bid * contracts * 100
+                elif entry_mid > 0:
+                    # Fallback to mid price
+                    pos['Current_Value'] = entry_mid * contracts * 100
+
+                # Recalculate P&L based on new current value
+                if pos['Current_Value'] > 0:
+                    total_cost = pos.get('Total_Cost') or 0
+                    pos['P&L'] = pos['Current_Value'] - total_cost
+                    if total_cost > 0:
+                        pos['P&L_%'] = (pos['P&L'] / total_cost) * 100
 
         return jsonify({
             "success": True,
