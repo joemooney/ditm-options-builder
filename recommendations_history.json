@@ -1,7 +1,7 @@
 {
   "metadata": {
     "created": "2025-11-08T19:08:56.088238",
-    "last_updated": "2025-11-09T18:41:21.864377",
+    "last_updated": "2025-11-09T18:42:32.452197",
     "version": "1.0"
   },
   "scans": {
@@ -193,14 +193,16 @@
       "total_cost": 14587.5,
       "equiv_shares": 264.59999999999997,
       "score": 0.32301312767780666,
-      "status": "open",
+      "status": "closed",
       "current_value": null,
       "current_stock_price": null,
       "current_delta": null,
       "unrealized_pnl": null,
       "unrealized_pnl_pct": null,
       "last_updated": null,
-      "snapshots": []
+      "snapshots": [],
+      "close_reason": "User removed",
+      "close_date": "2025-11-09T18:42:24.314030"
     },
     {
       "id": "scan_20251108T223804.146630_MSFT_360.0_2026-12-18",
@@ -259,14 +261,16 @@
       "total_cost": 14587.5,
       "equiv_shares": 264.59999999999997,
       "score": 0.32301312767780666,
-      "status": "open",
+      "status": "closed",
       "current_value": null,
       "current_stock_price": null,
       "current_delta": null,
       "unrealized_pnl": null,
       "unrealized_pnl_pct": null,
       "last_updated": null,
-      "snapshots": []
+      "snapshots": [],
+      "close_reason": "User removed",
+      "close_date": "2025-11-09T18:42:32.452173"
     },
     {
       "id": "scan_20251108T235608.841415_MSFT_360.0_2026-12-18",

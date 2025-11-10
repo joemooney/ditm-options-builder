@@ -137,17 +137,6 @@ async function loadDashboard() {
 
 // Update dashboard stats
 function updateDashboardStats(summary) {
-    // Overall stats at top
-    document.getElementById('stat-invested').textContent = formatCurrency(summary.total_invested);
-    document.getElementById('stat-value').textContent = formatCurrency(summary.current_value);
-
-    const pnlElement = document.getElementById('stat-pnl');
-    pnlElement.textContent = formatCurrency(summary.total_pnl) +
-                            ` (${formatPercent(summary.total_pnl_pct)})`;
-    pnlElement.className = 'stat-value ' + (summary.total_pnl >= 0 ? 'positive' : 'negative');
-
-    document.getElementById('stat-winrate').textContent = formatPercent(summary.win_rate);
-
     // Active positions stats
     document.getElementById('stat-active-invested').textContent = formatCurrency(summary.active_invested);
     document.getElementById('stat-active-value').textContent = formatCurrency(summary.active_value);
