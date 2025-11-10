@@ -634,6 +634,30 @@ def api_position_detail(ticker, strike, expiration):
         return jsonify({"success": False, "error": str(e)}), 500
 
 
+@app.route('/api/recommendation/remove', methods=['POST'])
+def api_remove_recommendation():
+    """Remove a recommendation from tracking."""
+    try:
+        data = request.json
+        ticker = data.get('ticker')
+        strike = data.get('strike')
+        expiration = data.get('expiration')
+
+        if not all([ticker, strike, expiration]):
+            return jsonify({"success": False, "error": "Missing required fields"}), 400
+
+        # Close the recommendation in the tracker
+        tracker.close_recommendation(ticker, strike, expiration, reason="User removed")
+
+        return jsonify({
+            "success": True,
+            "message": f"Removed {ticker} ${strike} {expiration}"
+        })
+
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
 @app.route('/api/health')
 def api_health():
     """Health check endpoint."""

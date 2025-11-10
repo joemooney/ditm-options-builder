@@ -194,24 +194,61 @@ function updateActiveAndRecommendedPositions(positions) {
     } else {
         let html = '<table class="table"><thead><tr>';
         html += '<th>Ticker</th><th>Strike</th><th>Expiration</th><th>DTE</th>';
-        html += '<th>Cost/Share</th><th>Delta</th><th>IV</th><th>Score</th>';
+        html += '<th>Cost/Share</th><th>Delta</th><th>IV</th><th>Score</th><th></th>';
         html += '</tr></thead><tbody>';
 
         recommendedPositions.slice(0, 10).forEach(pos => {
-            html += `<tr class="clickable-row" onclick="showPositionDetail('${pos.Ticker}', '${pos.Strike}', '${pos.Expiration}')" style="cursor: pointer;">`;
-            html += `<td><strong>${pos.Ticker}</strong></td>`;
-            html += `<td>${pos.Strike}</td>`;
-            html += `<td>${pos.Expiration}</td>`;
-            html += `<td>${pos.DTE || 0}</td>`;
-            html += `<td>${formatCurrency(pos.Cost_Share || pos['Cost/Share'] || 0)}</td>`;
-            html += `<td>${formatPercent(pos.Delta_Entry * 100)}</td>`;
-            html += `<td>${formatPercent((pos.IV_Entry || 0) * 100)}</td>`;
-            html += `<td>${(pos.Score || 0).toFixed(3)}</td>`;
+            html += `<tr class="clickable-row">`;
+            html += `<td onclick="showPositionDetail('${pos.Ticker}', '${pos.Strike}', '${pos.Expiration}')" style="cursor: pointer;"><strong>${pos.Ticker}</strong></td>`;
+            html += `<td onclick="showPositionDetail('${pos.Ticker}', '${pos.Strike}', '${pos.Expiration}')" style="cursor: pointer;">${pos.Strike}</td>`;
+            html += `<td onclick="showPositionDetail('${pos.Ticker}', '${pos.Strike}', '${pos.Expiration}')" style="cursor: pointer;">${pos.Expiration}</td>`;
+            html += `<td onclick="showPositionDetail('${pos.Ticker}', '${pos.Strike}', '${pos.Expiration}')" style="cursor: pointer;">${pos.DTE || 0}</td>`;
+            html += `<td onclick="showPositionDetail('${pos.Ticker}', '${pos.Strike}', '${pos.Expiration}')" style="cursor: pointer;">${formatCurrency(pos.Cost_Share || pos['Cost/Share'] || 0)}</td>`;
+            html += `<td onclick="showPositionDetail('${pos.Ticker}', '${pos.Strike}', '${pos.Expiration}')" style="cursor: pointer;">${formatPercent(pos.Delta_Entry * 100)}</td>`;
+            html += `<td onclick="showPositionDetail('${pos.Ticker}', '${pos.Strike}', '${pos.Expiration}')" style="cursor: pointer;">${formatPercent((pos.IV_Entry || 0) * 100)}</td>`;
+            html += `<td onclick="showPositionDetail('${pos.Ticker}', '${pos.Strike}', '${pos.Expiration}')" style="cursor: pointer;">${(pos.Score || 0).toFixed(3)}</td>`;
+            html += `<td style="text-align: center;">`;
+            html += `<button class="btn-icon" onclick="event.stopPropagation(); removeRecommendation('${pos.Ticker}', '${pos.Strike}', '${pos.Expiration}')" title="Remove recommendation">`;
+            html += `<i class="fas fa-trash" style="color: var(--danger-color);"></i>`;
+            html += `</button>`;
+            html += `</td>`;
             html += '</tr>';
         });
 
         html += '</tbody></table>';
         recommendedContainer.innerHTML = html;
+    }
+}
+
+// Remove recommendation
+async function removeRecommendation(ticker, strike, expiration) {
+    if (!confirm(`Remove ${ticker} $${strike} ${expiration} recommendation?`)) {
+        return;
+    }
+
+    try {
+        const response = await fetch('/api/recommendation/remove', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                ticker: ticker,
+                strike: parseFloat(strike),
+                expiration: expiration
+            })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            showToast(`Removed ${ticker} $${strike} recommendation`, 'success');
+            // Reload dashboard to refresh the list
+            loadDashboard();
+        } else {
+            showToast(data.error || 'Failed to remove recommendation', 'error');
+        }
+    } catch (error) {
+        console.error('Error removing recommendation:', error);
+        showToast('Error removing recommendation: ' + error.message, 'error');
     }
 }
 
