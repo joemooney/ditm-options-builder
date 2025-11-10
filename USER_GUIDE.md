@@ -294,6 +294,72 @@ Delta also approximates the probability the option finishes in-the-money.
 
 **This tool uses**: 0.80-0.95 delta (very stock-like behavior)
 
+#### How Delta Relates to Breakeven (Important Clarification!)
+
+**Delta and Breakeven are DIFFERENT concepts** that people often confuse:
+
+**Breakeven Point**:
+- The stock price where you neither make nor lose money at expiration
+- Formula: `Breakeven = Strike Price + Premium Paid`
+- Example: $200 strike + $28 premium = **$228 breakeven**
+- This is a **fixed number** that doesn't change after you buy
+- At expiration, if stock is above $228, you profit; below $228, you lose
+
+**Delta**:
+- How much your option price moves when the stock moves $1 **right now**
+- This is a **dynamic number** that changes as the stock moves and time passes
+- Delta does NOT directly tell you your breakeven point
+
+**Example to Show the Difference**:
+
+You buy AAPL $200 call for $28 premium with delta 0.85
+
+**Your Breakeven**: $228 (fixed)
+- If AAPL is at $228 at expiration, you break even
+- If AAPL is at $230 at expiration, you profit $2/share
+- This doesn't involve delta at all!
+
+**Delta's Role** (during the life of the option, before expiration):
+- Stock rises from $225 to $226 (+$1)
+- Your option rises from $28 to $28.85 (+$0.85, because delta = 0.85)
+- Stock rises to $230 (+$5)
+- Your option rises approximately $5 × 0.85 = $4.25
+- New option price: $28 + $4.25 = $32.25
+
+**Why Delta Matters for Breakeven Thinking**:
+
+Delta tells you how quickly you'll **reach** your breakeven point:
+
+High delta (0.90):
+- Stock moves from $225 to $228 (+$3)
+- Option moves +$3 × 0.90 = +$2.70
+- You're close to breakeven **before expiration** (can sell for profit)
+
+Low delta (0.50):
+- Stock moves from $225 to $228 (+$3)
+- Option moves +$3 × 0.50 = +$1.50
+- You're still underwater even though stock hit your $228 breakeven
+- You'd need stock to go higher or wait until expiration
+
+**The Key Insight**:
+
+- **Breakeven ($228)**: Where you profit **at expiration** if you hold until then
+- **Delta (0.85)**: How fast your option gains value **before expiration** as stock rises
+
+**With DITM options (high delta 0.80-0.95)**:
+- You don't need to wait until expiration to profit
+- If stock rises just a few dollars, your option gains almost dollar-for-dollar
+- Example: Stock rises from $225 to $230 (+$5)
+  - Your option rises ~$4.75 (95% of stock move with 0.95 delta)
+  - You paid $28, now worth $32.75
+  - You profit $4.75 **without waiting for expiration**
+  - Even though breakeven is $228, you're profitable at $230 right now
+
+**Summary**:
+- **Breakeven**: The finish line (stock price at expiration for $0 profit/loss)
+- **Delta**: The speed (how fast option moves toward profit as stock rises)
+- High delta DITM options let you profit **before** reaching breakeven at expiration because they move almost 1:1 with the stock
+
 ### Intrinsic Value
 The amount of profit if you exercised the option right now.
 
