@@ -718,8 +718,22 @@ async function showPositionDetail(ticker, strike, expiration) {
 function displayPositionDetail(position, analysis) {
     const content = document.getElementById('position-detail-content');
 
-    const pnl = position['P&L'] || 0;
-    const pnlPct = position['P&L_%'] || 0;
+    // Calculate current value from analysis if position shows 0
+    let currentValue = position.Current_Value || 0;
+    if (currentValue === 0 && analysis.current_option_price > 0) {
+        currentValue = analysis.current_option_price * analysis.contracts * 100;
+    }
+
+    // Calculate P&L based on current value
+    const totalCost = position.Total_Cost || 0;
+    let pnl = position['P&L'] || 0;
+    let pnlPct = position['P&L_%'] || 0;
+
+    if (currentValue > 0 && pnl === 0) {
+        pnl = currentValue - totalCost;
+        pnlPct = totalCost > 0 ? (pnl / totalCost) * 100 : 0;
+    }
+
     const status = position.Status || 'unknown';
     const isProfitable = pnl >= 0;
 
@@ -748,7 +762,7 @@ function displayPositionDetail(position, analysis) {
                 </div>
                 <div class="detail-item">
                     <div class="detail-label">Current Value</div>
-                    <div class="detail-value">${formatCurrency(position.Current_Value)}</div>
+                    <div class="detail-value">${formatCurrency(currentValue)}</div>
                 </div>
                 <div class="detail-item">
                     <div class="detail-label">Days Held</div>
