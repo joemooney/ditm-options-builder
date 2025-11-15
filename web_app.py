@@ -938,7 +938,9 @@ if __name__ == '__main__':
             port_manager.register_port(
                 app_name,
                 port,
-                "DITM Options Portfolio Builder - Web Interface"
+                description="DITM Options Portfolio Builder - Web Interface",
+                start_command="python web_app.py",
+                working_dir="/home/joe/ai/ditm"
             )
             print(f"✓ Registered '{app_name}' on port {port} in global registry")
         except ValueError as e:
@@ -948,7 +950,9 @@ if __name__ == '__main__':
             port_manager.register_port(
                 app_name,
                 port,
-                "DITM Options Portfolio Builder - Web Interface"
+                description="DITM Options Portfolio Builder - Web Interface",
+                start_command="python web_app.py",
+                working_dir="/home/joe/ai/ditm"
             )
             print(f"✓ Registered '{app_name}' on port {port} (auto-assigned)")
 
