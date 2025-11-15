@@ -22,7 +22,8 @@ class RecommendationTrackerDB:
 
     def _initialize_database(self):
         """Initialize database and create tables if needed."""
-        self.conn = sqlite3.connect(str(self.db_path))
+        # Use check_same_thread=False for Flask's multi-threaded environment
+        self.conn = sqlite3.connect(str(self.db_path), check_same_thread=False)
         self.conn.row_factory = sqlite3.Row  # Enable column access by name
 
         # Read and execute schema
