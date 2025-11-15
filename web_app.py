@@ -17,7 +17,7 @@ from ditm import (
     get_schwab_client, build_ditm_portfolio, find_ditm_calls, get_account_positions,
     MIN_DELTA, MAX_DELTA, MIN_INTRINSIC_PCT, MIN_DTE, MAX_IV, MAX_SPREAD_PCT, MIN_OI
 )
-from recommendation_tracker import RecommendationTracker
+from recommendation_tracker_db import RecommendationTrackerDB as RecommendationTracker
 
 # Import PortManager from global installation
 import sys
@@ -63,10 +63,15 @@ def load_config():
     """Load user configuration."""
     if CONFIG_FILE.exists():
         with open(CONFIG_FILE, 'r') as f:
-            return json.load(f)
+            config = json.load(f)
+            # Add current_preset if it doesn't exist
+            if 'current_preset' not in config:
+                config['current_preset'] = 'moderate'
+            return config
     return {
         "tickers": ["AAPL", "MSFT", "GOOGL", "JNJ", "JPM"],
         "use_ask_for_entry": True,  # Use ask price for breakeven (realistic), False for mid price (optimistic)
+        "current_preset": "moderate",  # Default filter preset
         "filters": {
             "MIN_DELTA": MIN_DELTA,
             "MAX_DELTA": MAX_DELTA,

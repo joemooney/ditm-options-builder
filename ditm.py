@@ -18,6 +18,7 @@ from dotenv import load_dotenv
 import schwab
 from schwab import auth
 from recommendation_tracker import RecommendationTracker
+from filter_matcher import FilterMatcher
 
 # Load environment variables
 load_dotenv()
@@ -494,9 +495,28 @@ def build_ditm_portfolio(client, tickers: list,
     # Initialize tracker and create scan record
     scan_id = None
     recent_tickers = {}
+    matcher = None
+    current_preset = None
+
     if save_recommendations:
         if tracker is None:
             tracker = RecommendationTracker()
+
+        # Initialize filter matcher and load presets
+        try:
+            matcher = FilterMatcher()
+            # Try to load current preset from config, default to 'moderate'
+            config_path = Path("./web_config.json")
+            if config_path.exists():
+                with open(config_path, 'r') as f:
+                    config = json.load(f)
+                current_preset = config.get('current_preset', matcher.get_default_preset())
+            else:
+                current_preset = matcher.get_default_preset()
+            print(f"\nUsing filter preset: {current_preset}")
+        except Exception as e:
+            print(f"\nWarning: Could not load filter presets: {e}")
+            print("Continuing without preset matching...")
 
         # Check for tickers with recent open recommendations (within 24 hours)
         recent_tickers = tracker.get_tickers_with_recent_recommendations(hours=24)
@@ -532,7 +552,13 @@ def build_ditm_portfolio(client, tickers: list,
             "MIN_OI": MIN_OI,
             "RISK_FREE_RATE": RISK_FREE_RATE
         }
-        scan_id = tracker.record_scan(scan_date, tickers, filter_params)
+        # Pass preset_name to scan record if available
+        scan_id = tracker.record_scan(
+            scan_date,
+            tickers,
+            filter_params,
+            preset_name=current_preset if current_preset else None
+        )
 
     for i, ticker in enumerate(tickers):
         print(f"\nProcessing {ticker} ({i+1}/{num_stocks})...")
@@ -546,11 +572,60 @@ def build_ditm_portfolio(client, tickers: list,
             print(f"  No qualifying DITM calls for {ticker}.")
             continue
 
-        top = candidates.iloc[0]  # Lowest score = most conservative
-
         # Get current stock price for comparison
         quote_resp = client.get_quote(ticker)
         S = quote_resp.json()[ticker]["quote"]["lastPrice"]
+
+        # Save ALL candidates if using DB tracker with add_candidate method
+        if save_recommendations and scan_id and matcher and hasattr(tracker, 'add_candidate'):
+            print(f"  Found {len(candidates)} qualifying options for {ticker}")
+            for idx, candidate in candidates.iterrows():
+                # Calculate values for this candidate
+                intrinsic = max(S - candidate["Strike"], 0)
+                extrinsic = candidate["Ask"] - intrinsic
+                spread_loss = candidate["Ask"] - candidate["Bid"]
+                total_immediate_loss = extrinsic + spread_loss
+                total_immediate_loss_pct = (total_immediate_loss / candidate["Ask"]) * 100 if candidate["Ask"] > 0 else 0
+
+                # Check which presets match this candidate
+                matched_presets = matcher.check_all_preset_matches({
+                    'delta': candidate['Delta'],
+                    'iv': candidate['IV'],
+                    'intrinsic_pct': candidate['Intrinsic%'],
+                    'extrinsic_pct': candidate.get('Extrinsic%', total_immediate_loss_pct / 100),
+                    'dte': candidate['DTE'],
+                    'spread_pct': candidate['Spread%'],
+                    'oi': candidate['OI']
+                })
+
+                # Save candidate to database
+                tracker.add_candidate(
+                    scan_id=scan_id,
+                    ticker=ticker,
+                    stock_price=S,
+                    strike=candidate["Strike"],
+                    expiration=candidate["Expiration"],
+                    dte=candidate["DTE"],
+                    bid=candidate["Bid"],
+                    ask=candidate["Ask"],
+                    mid=candidate["Mid"],
+                    delta=candidate["Delta"],
+                    iv=candidate["IV"],
+                    intrinsic=intrinsic,
+                    intrinsic_pct=candidate["Intrinsic%"],
+                    extrinsic=total_immediate_loss,
+                    extrinsic_pct=total_immediate_loss_pct / 100,
+                    score=candidate["Score"],
+                    spread_pct=candidate["Spread%"],
+                    oi=candidate["OI"],
+                    cost_per_share=candidate["Cost/Share"],
+                    matched_presets=matched_presets,
+                    recommended=(idx == 0)  # First one is top pick
+                )
+
+            print(f"  Saved {len(candidates)} candidates, matching presets: {set([p for cand in [matcher.check_all_preset_matches({'delta': c['Delta'], 'iv': c['IV'], 'intrinsic_pct': c['Intrinsic%'], 'extrinsic_pct': 0.15, 'dte': c['DTE'], 'spread_pct': c['Spread%'], 'oi': c['OI']}) for _, c in candidates.iterrows()] for p in cand])}")
+
+        top = candidates.iloc[0]  # Lowest score = most conservative
 
         # Position sizing: Single contract per ticker
         contracts = 1
@@ -586,7 +661,7 @@ def build_ditm_portfolio(client, tickers: list,
             "Score": round(top["Score"], 3)
         })
 
-        # Save recommendation to tracker
+        # Save recommendation to tracker (top pick)
         if save_recommendations and scan_id:
             tracker.add_recommendation(
                 scan_id=scan_id,

@@ -16,8 +16,8 @@ CREATE TABLE IF NOT EXISTS scans (
     created_at TEXT DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE INDEX idx_scans_date ON scans(scan_date);
-CREATE INDEX idx_scans_preset ON scans(preset_name);
+CREATE INDEX IF NOT EXISTS idx_scans_date ON scans(scan_date);
+CREATE INDEX IF NOT EXISTS idx_scans_preset ON scans(preset_name);
 
 -- ============================================================================
 -- RECOMMENDATIONS TABLE
@@ -83,11 +83,11 @@ CREATE TABLE IF NOT EXISTS recommendations (
     FOREIGN KEY (scan_id) REFERENCES scans(scan_id)
 );
 
-CREATE INDEX idx_rec_ticker ON recommendations(ticker);
-CREATE INDEX idx_rec_status ON recommendations(status);
-CREATE INDEX idx_rec_scan ON recommendations(scan_id);
-CREATE INDEX idx_rec_expiration ON recommendations(expiration);
-CREATE UNIQUE INDEX idx_rec_unique ON recommendations(ticker, strike, expiration);
+CREATE INDEX IF NOT EXISTS idx_rec_ticker ON recommendations(ticker);
+CREATE INDEX IF NOT EXISTS idx_rec_status ON recommendations(status);
+CREATE INDEX IF NOT EXISTS idx_rec_scan ON recommendations(scan_id);
+CREATE INDEX IF NOT EXISTS idx_rec_expiration ON recommendations(expiration);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_rec_unique ON recommendations(ticker, strike, expiration);
 
 -- ============================================================================
 -- CANDIDATES TABLE
@@ -140,10 +140,10 @@ CREATE TABLE IF NOT EXISTS candidates (
     FOREIGN KEY (scan_id) REFERENCES scans(scan_id)
 );
 
-CREATE INDEX idx_cand_scan ON candidates(scan_id);
-CREATE INDEX idx_cand_ticker ON candidates(ticker);
-CREATE INDEX idx_cand_recommended ON candidates(recommended);
-CREATE INDEX idx_cand_date ON candidates(scan_date);
+CREATE INDEX IF NOT EXISTS idx_cand_scan ON candidates(scan_id);
+CREATE INDEX IF NOT EXISTS idx_cand_ticker ON candidates(ticker);
+CREATE INDEX IF NOT EXISTS idx_cand_recommended ON candidates(recommended);
+CREATE INDEX IF NOT EXISTS idx_cand_date ON candidates(scan_date);
 
 -- ============================================================================
 -- PRICE_SNAPSHOTS TABLE
@@ -166,8 +166,8 @@ CREATE TABLE IF NOT EXISTS price_snapshots (
     FOREIGN KEY (recommendation_id) REFERENCES recommendations(id)
 );
 
-CREATE INDEX idx_snap_rec ON price_snapshots(recommendation_id);
-CREATE INDEX idx_snap_timestamp ON price_snapshots(timestamp);
+CREATE INDEX IF NOT EXISTS idx_snap_rec ON price_snapshots(recommendation_id);
+CREATE INDEX IF NOT EXISTS idx_snap_timestamp ON price_snapshots(timestamp);
 
 -- ============================================================================
 -- METADATA TABLE
