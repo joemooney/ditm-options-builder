@@ -791,6 +791,9 @@ async function loadSettings() {
     // Load ticker list
     await loadTickerList();
 
+    // Load presets
+    await loadPresets();
+
     // Allow Enter key on new ticker input
     document.getElementById('new-ticker-input').addEventListener('keypress', (e) => {
         if (e.key === 'Enter') {
@@ -798,6 +801,86 @@ async function loadSettings() {
             addTicker();
         }
     });
+}
+
+// Load filter presets
+async function loadPresets() {
+    try {
+        const response = await fetch('/api/presets');
+        const data = await response.json();
+
+        if (data.success) {
+            const selector = document.getElementById('preset-selector');
+            selector.innerHTML = '';
+
+            // Populate dropdown
+            for (const [key, preset] of Object.entries(data.presets)) {
+                const option = document.createElement('option');
+                option.value = key;
+                option.textContent = preset.name;
+                if (key === data.current_preset) {
+                    option.selected = true;
+                }
+                selector.appendChild(option);
+            }
+
+            // Show current preset info
+            updatePresetDisplay(data.current_preset, data.presets);
+        }
+    } catch (error) {
+        console.error('Error loading presets:', error);
+    }
+}
+
+// Update preset display
+function updatePresetDisplay(presetKey, presets) {
+    const preset = presets[presetKey];
+    if (!preset) return;
+
+    // Update description
+    document.getElementById('preset-description').textContent = preset.description;
+
+    // Update characteristics
+    const charsList = document.getElementById('preset-chars-list');
+    charsList.innerHTML = '';
+    for (const [key, value] of Object.entries(preset.characteristics)) {
+        const li = document.createElement('li');
+        li.innerHTML = `<strong>${key.replace(/_/g, ' ')}:</strong> ${value}`;
+        charsList.appendChild(li);
+    }
+    document.getElementById('preset-characteristics').style.display = 'block';
+}
+
+// Change preset
+async function changePreset() {
+    const selector = document.getElementById('preset-selector');
+    const presetName = selector.value;
+
+    try {
+        const response = await fetch(`/api/preset/set/${presetName}`, {
+            method: 'POST'
+        });
+        const data = await response.json();
+
+        if (data.success) {
+            showToast(`Preset changed to: ${data.preset.name}`, 'success');
+
+            // Reload presets to update display
+            const presetsResp = await fetch('/api/presets');
+            const presetsData = await presetsResp.json();
+            if (presetsData.success) {
+                updatePresetDisplay(presetName, presetsData.presets);
+            }
+
+            // Reload config
+            await loadConfig();
+        } else {
+            showToast(`Failed to change preset: ${data.error}`, 'error');
+        }
+    } catch (error) {
+        console.error('Error changing preset:', error);
+        showToast('Error changing preset', 'error');
+    }
 }
 
 // Load ticker list

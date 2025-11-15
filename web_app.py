@@ -932,6 +932,119 @@ def api_remove_recommendation():
         return jsonify({"success": False, "error": str(e)}), 500
 
 
+@app.route('/api/presets', methods=['GET'])
+def api_presets():
+    """Get all available filter presets."""
+    try:
+        from filter_matcher import FilterMatcher
+        matcher = FilterMatcher()
+        presets = matcher.get_all_presets()
+        default_preset = matcher.get_default_preset()
+
+        return jsonify({
+            "success": True,
+            "presets": presets,
+            "default_preset": default_preset,
+            "current_preset": load_config().get('current_preset', default_preset)
+        })
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route('/api/preset/<preset_name>', methods=['GET'])
+def api_preset_details(preset_name):
+    """Get details for a specific preset."""
+    try:
+        from filter_matcher import FilterMatcher
+        matcher = FilterMatcher()
+        preset = matcher.get_preset(preset_name)
+
+        return jsonify({
+            "success": True,
+            "preset": preset
+        })
+    except ValueError as e:
+        return jsonify({"success": False, "error": str(e)}), 404
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route('/api/preset/set/<preset_name>', methods=['POST'])
+def api_set_preset(preset_name):
+    """Set the current active preset."""
+    try:
+        from filter_matcher import FilterMatcher
+        matcher = FilterMatcher()
+
+        # Validate preset exists
+        preset = matcher.get_preset(preset_name)
+
+        # Update config
+        config = load_config()
+        config['current_preset'] = preset_name
+        save_config(config)
+
+        return jsonify({
+            "success": True,
+            "message": f"Current preset set to '{preset_name}'",
+            "preset": preset
+        })
+    except ValueError as e:
+        return jsonify({"success": False, "error": str(e)}), 404
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route('/api/scan/<scan_id>/candidates', methods=['GET'])
+def api_scan_candidates(scan_id):
+    """Get all candidates from a specific scan."""
+    try:
+        # Check if tracker has get_candidates_by_scan method
+        if not hasattr(tracker, 'get_candidates_by_scan'):
+            return jsonify({
+                "success": False,
+                "error": "Candidate tracking not available with current tracker"
+            }), 501
+
+        candidates_df = tracker.get_candidates_by_scan(scan_id)
+
+        # Convert to list of dicts
+        candidates_list = candidates_df.to_dict('records') if not candidates_df.empty else []
+
+        return jsonify({
+            "success": True,
+            "scan_id": scan_id,
+            "count": len(candidates_list),
+            "candidates": candidates_list
+        })
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route('/api/preset/performance', methods=['GET'])
+def api_preset_performance():
+    """Compare performance across all presets."""
+    try:
+        # Check if tracker has preset performance method
+        if not hasattr(tracker, 'get_preset_performance'):
+            return jsonify({
+                "success": False,
+                "error": "Preset performance tracking not available with current tracker"
+            }), 501
+
+        performance_df = tracker.get_preset_performance()
+
+        # Convert DataFrame to dict
+        performance = performance_df.to_dict('records') if not performance_df.empty else []
+
+        return jsonify({
+            "success": True,
+            "performance": performance
+        })
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
 @app.route('/api/health')
 def api_health():
     """Health check endpoint."""

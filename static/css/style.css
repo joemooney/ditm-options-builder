@@ -1269,3 +1269,37 @@ thead, tbody {
         gap: 1rem;
     }
 }
+
+/* Preset Info Styles */
+.preset-info {
+    margin-top: 1rem;
+    padding: 1rem;
+    background-color: var(--bg-secondary);
+    border-radius: 8px;
+    border-left: 3px solid var(--primary-color);
+}
+
+.preset-info h4 {
+    margin-top: 0;
+    margin-bottom: 0.75rem;
+    color: var(--text-primary);
+    font-size: 0.95rem;
+    font-weight: 600;
+}
+
+.preset-info ul {
+    margin: 0;
+    padding-left: 1.5rem;
+    list-style-type: disc;
+}
+
+.preset-info li {
+    margin-bottom: 0.5rem;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+.preset-info li strong {
+    color: var(--text-primary);
+    text-transform: capitalize;
+}
