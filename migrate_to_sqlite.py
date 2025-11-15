@@ -57,12 +57,19 @@ def migrate_json_to_sqlite(json_path: str = "./recommendations_history.json",
     if 'scans' in data:
         for scan_id, scan_data in data['scans'].items():
             try:
-                tracker.record_scan(
-                    scan_date=scan_data['scan_date'],
-                    tickers=scan_data['tickers'],
-                    filter_params=scan_data['filter_params'],
-                    preset_name=scan_data.get('preset_name')  # May not exist in old data
-                )
+                # Insert scan directly with original scan_id (don't regenerate it)
+                cursor = tracker.conn.cursor()
+                cursor.execute("""
+                    INSERT INTO scans (scan_id, scan_date, preset_name, tickers, filter_params)
+                    VALUES (?, ?, ?, ?, ?)
+                """, (
+                    scan_id,  # Use original scan_id
+                    scan_data['scan_date'],
+                    scan_data.get('preset_name'),
+                    json.dumps(scan_data['tickers']),
+                    json.dumps(scan_data['filter_params'])
+                ))
+                tracker.conn.commit()
                 scans_migrated += 1
             except Exception as e:
                 print(f"   ⚠ Warning: Failed to migrate scan {scan_id}: {e}")
@@ -75,25 +82,25 @@ def migrate_json_to_sqlite(json_path: str = "./recommendations_history.json",
     if 'recommendations' in data:
         for rec in data['recommendations']:
             try:
-                # Add recommendation
+                # Add recommendation (handle missing fields from old data)
                 rec_id = tracker.add_recommendation(
                     scan_id=rec['scan_id'],
                     ticker=rec['ticker'],
-                    stock_price=rec['stock_price_at_rec'],
+                    stock_price=rec.get('stock_price_at_rec', 0),
                     strike=rec['strike'],
                     expiration=rec['expiration'],
-                    dte=rec['dte_at_rec'],
-                    premium_bid=rec['premium_bid'],
-                    premium_ask=rec['premium_ask'],
-                    premium_mid=rec['premium_mid'],
-                    delta=rec['delta_at_rec'],
+                    dte=rec.get('dte_at_rec', 0),
+                    premium_bid=rec.get('premium_bid', 0),
+                    premium_ask=rec.get('premium_ask', 0),
+                    premium_mid=rec.get('premium_mid', 0),
+                    delta=rec.get('delta_at_rec', 0.8),
                     iv=rec.get('iv_at_rec', 0),
-                    intrinsic_pct=rec['intrinsic_pct'],
+                    intrinsic_pct=rec.get('intrinsic_pct', 0.8),  # Default for old data
                     oi=rec.get('open_interest', 0),
                     spread_pct=rec.get('spread_pct', 0),
                     cost_per_share=rec.get('cost_per_share', 0),
-                    contracts=rec['contracts_recommended'],
-                    total_cost=rec['total_cost'],
+                    contracts=rec.get('contracts_recommended', 1),
+                    total_cost=rec.get('total_cost', 0),
                     equiv_shares=rec.get('equiv_shares', 0),
                     score=rec.get('score', 0),
                     extrinsic_value=rec.get('extrinsic_value', 0),
