@@ -1,0 +1,120 @@
+{
+  "filter_presets": {
+    "conservative": {
+      "name": "Conservative (Low Risk)",
+      "description": "Minimize time decay and maximize intrinsic value. Best for risk-averse investors prioritizing capital preservation.",
+      "color": "#28a745",
+      "filters": {
+        "MIN_DELTA": 0.80,
+        "MAX_DELTA": 0.90,
+        "MIN_INTRINSIC_PCT": 0.80,
+        "MIN_DTE": 20,
+        "MAX_DTE": 45,
+        "MAX_IV": 0.25,
+        "MAX_SPREAD_PCT": 0.015,
+        "MIN_OI": 500,
+        "MAX_EXTRINSIC_PCT": 0.20
+      },
+      "characteristics": {
+        "risk_level": "Low",
+        "expected_positions": "Fewer, higher quality",
+        "typical_leverage": "7-9x",
+        "time_decay_risk": "Very Low"
+      }
+    },
+    "moderate": {
+      "name": "Moderate (Balanced)",
+      "description": "Balance between leverage and time decay. Suitable for most investors seeking reasonable returns with manageable risk.",
+      "color": "#007bff",
+      "filters": {
+        "MIN_DELTA": 0.75,
+        "MAX_DELTA": 0.90,
+        "MIN_INTRINSIC_PCT": 0.75,
+        "MIN_DTE": 15,
+        "MAX_DTE": 60,
+        "MAX_IV": 0.30,
+        "MAX_SPREAD_PCT": 0.020,
+        "MIN_OI": 250,
+        "MAX_EXTRINSIC_PCT": 0.25
+      },
+      "characteristics": {
+        "risk_level": "Medium",
+        "expected_positions": "Moderate quantity",
+        "typical_leverage": "8-11x",
+        "time_decay_risk": "Low to Moderate"
+      }
+    },
+    "aggressive": {
+      "name": "Aggressive (High Leverage)",
+      "description": "Maximize leverage while accepting more time decay. For experienced traders comfortable with higher volatility.",
+      "color": "#dc3545",
+      "filters": {
+        "MIN_DELTA": 0.70,
+        "MAX_DELTA": 0.85,
+        "MIN_INTRINSIC_PCT": 0.70,
+        "MIN_DTE": 10,
+        "MAX_DTE": 90,
+        "MAX_IV": 0.35,
+        "MAX_SPREAD_PCT": 0.025,
+        "MIN_OI": 200,
+        "MAX_EXTRINSIC_PCT": 0.30
+      },
+      "characteristics": {
+        "risk_level": "High",
+        "expected_positions": "More opportunities",
+        "typical_leverage": "10-15x",
+        "time_decay_risk": "Moderate to High"
+      }
+    },
+    "high_liquidity": {
+      "name": "High Liquidity Focus",
+      "description": "Prioritize tight spreads and high volume for easy entry/exit. Best for larger positions or frequent trading.",
+      "color": "#17a2b8",
+      "filters": {
+        "MIN_DELTA": 0.75,
+        "MAX_DELTA": 0.90,
+        "MIN_INTRINSIC_PCT": 0.75,
+        "MIN_DTE": 15,
+        "MAX_DTE": 60,
+        "MAX_IV": 0.30,
+        "MAX_SPREAD_PCT": 0.010,
+        "MIN_OI": 1000,
+        "MAX_EXTRINSIC_PCT": 0.25
+      },
+      "characteristics": {
+        "risk_level": "Medium",
+        "expected_positions": "Liquid stocks only",
+        "typical_leverage": "8-11x",
+        "time_decay_risk": "Low"
+      }
+    },
+    "low_volatility": {
+      "name": "Low Volatility Stable",
+      "description": "Focus on stable, low-IV stocks to minimize volatility risk. Ideal for conservative long-term holders.",
+      "color": "#6f42c1",
+      "filters": {
+        "MIN_DELTA": 0.80,
+        "MAX_DELTA": 0.90,
+        "MIN_INTRINSIC_PCT": 0.80,
+        "MIN_DTE": 20,
+        "MAX_DTE": 45,
+        "MAX_IV": 0.20,
+        "MAX_SPREAD_PCT": 0.015,
+        "MIN_OI": 500,
+        "MAX_EXTRINSIC_PCT": 0.20
+      },
+      "characteristics": {
+        "risk_level": "Very Low",
+        "expected_positions": "Stable stocks only",
+        "typical_leverage": "7-9x",
+        "time_decay_risk": "Very Low"
+      }
+    }
+  },
+  "default_preset": "moderate",
+  "preset_metadata": {
+    "created_at": "2025-11-15T00:00:00",
+    "version": "1.0",
+    "last_updated": "2025-11-15T00:00:00"
+  }
+}
