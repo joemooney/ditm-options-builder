@@ -129,18 +129,45 @@ def api_scan():
         )
 
         if portfolio_df.empty:
+            # Record successful scan even if no positions found
+            tracker.record_successful_schwab_fetch()
+
             # Provide specific message if all tickers were skipped
             if len(skipped_tickers) == len(tickers):
                 return jsonify({
-                    "success": False,
+                    "success": True,
+                    "portfolio": [],
+                    "summary": {
+                        "num_positions": 0,
+                        "total_invested": 0,
+                        "total_equiv_shares": 0,
+                        "total_extrinsic": 0,
+                        "scan_date": datetime.now().isoformat(),
+                        "tickers_scanned": 0,
+                        "tickers_skipped": len(skipped_tickers)
+                    },
                     "message": "All tickers already have recent open recommendations (within 24 hours). No new scan needed.",
-                    "skipped_tickers": skipped_tickers
+                    "skipped_tickers": skipped_tickers,
+                    "no_results": True,
+                    "no_results_reason": "all_skipped"
                 })
             else:
                 return jsonify({
-                    "success": False,
-                    "message": "No qualifying options found",
-                    "skipped_tickers": skipped_tickers
+                    "success": True,
+                    "portfolio": [],
+                    "summary": {
+                        "num_positions": 0,
+                        "total_invested": 0,
+                        "total_equiv_shares": 0,
+                        "total_extrinsic": 0,
+                        "scan_date": datetime.now().isoformat(),
+                        "tickers_scanned": len(tickers_to_scan),
+                        "tickers_skipped": len(skipped_tickers)
+                    },
+                    "message": "No qualifying DITM options found for the scanned tickers. Try different tickers or check filter settings.",
+                    "skipped_tickers": skipped_tickers,
+                    "no_results": True,
+                    "no_results_reason": "no_qualifying_options"
                 })
 
         # Convert to JSON-serializable format

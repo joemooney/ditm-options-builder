@@ -526,7 +526,14 @@ async function handleScanSubmit(e) {
 
         if (data.success) {
             displayScanResults(data);
-            showToast('Scan completed successfully!', 'success');
+
+            // Show appropriate toast message
+            if (data.no_results) {
+                showToast(data.message, 'warning');
+            } else {
+                showToast('Scan completed successfully!', 'success');
+            }
+
             loadDashboard(); // Refresh dashboard
         } else {
             showToast(data.error || data.message || 'Scan failed', 'error');
@@ -562,7 +569,33 @@ function displayScanResults(data) {
         html += `<div class="info-box mb-3"><i class="fas fa-info-circle"></i> ${data.info}</div>`;
     }
 
-    if (data.portfolio && data.portfolio.length > 0) {
+    // Display no-results message if applicable
+    if (data.no_results) {
+        html += '<div class="card" style="margin-top: 20px;"><div class="card-body">';
+        html += '<div style="text-align: center; padding: 40px 20px;">';
+        html += '<i class="fas fa-search" style="font-size: 48px; color: #ccc; margin-bottom: 20px;"></i>';
+        html += `<h3 style="color: #666; margin-bottom: 10px;">No Qualifying Options Found</h3>`;
+        html += `<p style="color: #999; margin-bottom: 20px;">${data.message}</p>`;
+
+        if (data.no_results_reason === 'no_qualifying_options') {
+            html += '<div style="text-align: left; max-width: 500px; margin: 0 auto; background: #f8f9fa; padding: 20px; border-radius: 8px;">';
+            html += '<h4 style="margin-top: 0; color: #555;"><i class="fas fa-lightbulb"></i> Suggestions:</h4>';
+            html += '<ul style="color: #666; line-height: 1.8;">';
+            html += '<li>Try different ticker symbols (high-volatility stocks often have better DITM options)</li>';
+            html += '<li>Check that the tickers have active options markets</li>';
+            html += '<li>Review filter settings in Settings page (may be too restrictive)</li>';
+            html += '<li>Market conditions may not favor DITM options right now</li>';
+            html += '</ul>';
+            html += '</div>';
+        } else if (data.no_results_reason === 'all_skipped') {
+            html += '<div style="text-align: left; max-width: 500px; margin: 0 auto; background: #fff3cd; padding: 20px; border-radius: 8px; border-left: 4px solid #ffc107;">';
+            html += '<p style="color: #856404; margin: 0;"><i class="fas fa-clock"></i> All selected tickers already have open recommendations from the last 24 hours.</p>';
+            html += '<p style="color: #856404; margin: 10px 0 0 0;">Wait 24 hours or add different tickers to scan.</p>';
+            html += '</div>';
+        }
+
+        html += '</div></div></div>';
+    } else if (data.portfolio && data.portfolio.length > 0) {
         html += '<table class="table"><thead><tr>';
         html += '<th>Ticker</th>';
         html += `<th>Strike ${tooltip("Strike price of the call option. You have the right to buy stock at this price.")}</th>`;
