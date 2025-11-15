@@ -35,46 +35,63 @@ DITM call options offer **stock-like exposure with 7-13x leverage** while minimi
 ## How It Works
 
 ### For End Users
-1. **Add Tickers:** Build a watchlist of stocks you want to analyze
-2. **Run Scan:** Click one button to analyze all options chains
-3. **Review Results:** See ranked DITM call recommendations with detailed metrics
-4. **Track Performance:** Monitor open positions with live market data
-5. **Analyze Risk:** View comprehensive risk metrics (Sharpe, Sortino, drawdown)
+1. **Select Filter Preset:** Choose from 5 pre-configured strategies (Conservative, Moderate, Aggressive, High Liquidity, Low Volatility)
+2. **Add Tickers:** Build a watchlist of stocks you want to analyze
+3. **Run Scan:** Click one button to analyze all options chains with your chosen preset
+4. **Review Results:** See ranked DITM call recommendations with detailed metrics
+5. **Track Performance:** Monitor open positions with live market data
+6. **Analyze Risk:** View comprehensive risk metrics (Sharpe, Sortino, drawdown)
+7. **Compare Presets:** Analyze which filter strategies perform best over time
 
 ### For Developers
 1. **Schwab API Integration:** OAuth 2.0 authentication with automatic token refresh
 2. **Options Analysis Engine:** Black-Scholes delta calculation, multi-criteria filtering
-3. **SQLite Database:** Persistent tracking of recommendations and performance
-4. **Flask Web Server:** REST API endpoints for scan, positions, performance
-5. **Port Manager Integration:** Global port registry and dashboard launcher
+3. **Filter Preset System:** 5 default presets, candidate tracking, retroactive matching
+4. **SQLite Database:** Persistent tracking of scans, recommendations, candidates, and performance
+5. **Flask Web Server:** REST API endpoints for scan, positions, performance, presets
+6. **Port Manager Integration:** Global port registry and dashboard launcher
 
 ## Key Features
 
+### Filter Preset System (NEW)
+- **5 Default Presets:** Conservative, Moderate, Aggressive, High Liquidity, Low Volatility
+- **Candidate Tracking:** Save ALL qualifying options (10-50 per ticker), not just top pick
+- **Retroactive Matching:** Tag each candidate with which presets it matches
+- **Performance Comparison:** Analyze which filter strategies work best
+- **Easy Selection:** Change preset via Settings page with instant feedback
+- **Data-Driven Optimization:** Optimize filter parameters based on historical performance
+
 ### Options Analysis
 - **Multi-Ticker Scanning:** Analyze entire watchlist in one scan
-- **Conservative Filtering:** 10+ criteria ensure quality recommendations
+- **Preset-Based Filtering:** Use proven filter strategies or customize your own
+- **10+ Filter Criteria:** Delta, IV, DTE, liquidity, spreads, intrinsic value, and more
 - **Intelligent Ranking:** Composite score balances leverage, liquidity, and risk
 - **Dividend Awareness:** Warns about dividend-paying stocks (options don't receive dividends)
+- **Comprehensive Candidate Storage:** All qualifying options saved for analysis
 
 ### Performance Tracking
-- **Automatic Recording:** Every recommendation saved with full market data
+- **Automatic Recording:** Every scan, recommendation, and candidate saved with full market data
 - **Live Updates:** Refresh current prices on demand
 - **Win Rate Analysis:** Track success rate and average returns
 - **Risk Metrics:** Sharpe ratio, Sortino ratio, max drawdown, Calmar ratio, profit factor
 - **Position Comparison:** Active vs. recommended vs. closed positions
+- **Preset Performance:** Compare returns across different filter strategies
 
 ### Web Dashboard
-- **Professional Interface:** Clean, intuitive design
+- **Professional Interface:** Clean, intuitive design with dark/light themes
 - **Real-Time Data:** Live position tracking from Schwab account
 - **Position Details:** Breakeven, profit targets, leverage analysis
+- **Settings Page:** Manage presets, tickers, and filter parameters
 - **Documentation:** Built-in guides (setup, tracking, user guide)
 - **Mobile Responsive:** Works on desktop, tablet, phone
 
 ### Developer Features
 - **Port Manager Integration:** Global port registry (5010)
-- **RESTful API:** JSON endpoints for all functionality
-- **Modular Architecture:** Separate concerns (API, logic, tracking, web)
+- **RESTful API:** JSON endpoints for all functionality (scan, positions, presets, candidates)
+- **SQLite Database:** Efficient storage with proper indexing and foreign keys
+- **Modular Architecture:** Separate concerns (API, logic, tracking, web, presets)
 - **Type Safety:** Clean data conversion (numpy/pandas → JSON)
+- **Thread-Safe:** Flask multi-threading support
 
 ## Target Audience
 

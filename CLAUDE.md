@@ -5,20 +5,25 @@
 The DITM (Deep-In-The-Money) Options Portfolio Builder is a sophisticated Python-based web application for analyzing and building conservative options portfolios using the Charles Schwab Trader API.
 
 **Core Features:**
-- Automated DITM call options scanning with multi-criteria filtering
-- Real-time options chain analysis via Schwab API
-- Web-based dashboard for portfolio management
-- Recommendation tracking with performance analytics
-- Risk metrics (Sharpe ratio, Sortino ratio, max drawdown, Calmar ratio)
-- Ticker management with dividend awareness
-- Live position tracking and comparison
+- **Filter Preset System:** 5 default presets (Conservative, Moderate, Aggressive, High Liquidity, Low Volatility)
+- **Candidate Tracking:** Save ALL qualifying options, not just top pick (10-50 per ticker)
+- **Automated DITM call options scanning** with preset-based multi-criteria filtering
+- **Real-time options chain analysis** via Schwab API
+- **Web-based dashboard** for portfolio and preset management
+- **Recommendation tracking** with performance analytics
+- **Risk metrics:** Sharpe ratio, Sortino ratio, max drawdown, Calmar ratio
+- **Ticker management** with dividend awareness
+- **Live position tracking** and comparison
+- **Preset performance comparison:** Analyze which filter strategies work best
 
 ## Architecture Overview
 
 ### Framework: Flask Web Application
 - **Main Entry Point:** `web_app.py` (Flask application)
 - **Core Logic:** `ditm.py` (Schwab API integration, options analysis)
-- **Tracking:** `recommendation_tracker.py` (SQLite database for performance tracking)
+- **Tracking:** `recommendation_tracker_db.py` (SQLite database, thread-safe for Flask)
+- **Preset System:** `filter_matcher.py` (Preset matching logic)
+- **Filter Configuration:** `filter_presets.json` (5 default presets)
 - **Port Management:** Integrated with global Port Manager at `/home/joe/ai/port_manager`
 
 ### Technology Stack
@@ -33,21 +38,58 @@ The DITM (Deep-In-The-Money) Options Portfolio Builder is a sophisticated Python
 ditm/
 ├── web_app.py              # Flask web server (main entry point)
 ├── ditm.py                 # Core options analysis logic
-├── recommendation_tracker.py # Performance tracking database
+├── recommendation_tracker_db.py # SQLite tracking (current)
+├── recommendation_tracker.py    # JSON tracking (legacy)
+├── filter_matcher.py       # Preset matching logic
+├── filter_presets.json     # 5 default presets configuration
+├── db_schema.sql           # SQLite database schema
+├── recommendations.db      # SQLite database file
+├── migrate_to_sqlite.py    # Migration utility
+├── reauth.py               # Schwab re-authentication helper
 ├── main.py                 # Legacy CLI interface
 ├── templates/              # HTML templates
+│   └── index.html          # Single-page app with preset UI
 ├── static/                 # CSS, JavaScript
+│   ├── css/style.css       # Styles including preset info
+│   └── js/app.js           # Frontend logic with preset functions
 ├── .env                    # API credentials (not in git)
-├── web_config.json         # User preferences
-└── recommendations_history.json  # Tracking data
+├── web_config.json         # User preferences (includes current_preset)
+├── recommendations_history.json.backup  # JSON backup
+├── PHASE2_NEXT_STEPS.md    # Phase 2 completion status
+├── PHASE3_COMPLETE.md      # Phase 3 documentation
+└── FILTER_PRESET_DESIGN.md # Original design document
 ```
 
 ## Recent Major Updates
 
-### Port Manager Integration (Latest)
+### Filter Preset System (Latest - Phases 2 & 3)
+**What Changed:**
+- Migrated from JSON to SQLite for better performance and scalability
+- Implemented complete preset system with 5 default strategies
+- Added candidate tracking - saves ALL qualifying options, not just top pick
+- Created preset matching logic to tag candidates with matched presets
+- Built API endpoints for preset management
+- Added preset selector UI to Settings page
+
+**Key Files:**
+- `filter_matcher.py` - Preset matching logic (224 lines)
+- `filter_presets.json` - 5 default preset configurations
+- `recommendation_tracker_db.py` - SQLite tracker (thread-safe)
+- `db_schema.sql` - Database schema with candidates table
+- `web_app.py` - 5 new API endpoints
+- `templates/index.html` - Preset selector UI
+- `static/js/app.js` - Preset management functions
+
+**Impact:**
+- Can now compare different filter strategies empirically
+- Data-driven optimization of filter parameters
+- Retroactive analysis of past scans
+- Foundation for advanced analytics
+
+### Port Manager Integration
 - Fully integrated with global Port Manager
 - Registered on port 5010
-- Dashboard launcher enabled with start command: `python web_app.py`
+- Dashboard launcher enabled with start command: `.venv/bin/python web_app.py`
 - Working directory: `/home/joe/ai/ditm`
 - Access via Port Manager dashboard at http://localhost:5050
 
@@ -57,13 +99,15 @@ ditm/
 - Performance metrics visualization
 - Ticker management with dividend warnings
 - Mobile-responsive design
+- Dark/light theme support
 
 ### Recommendation Tracking System
-- Automatic storage of all recommendations
+- Automatic storage of all recommendations, scans, and candidates
 - Performance tracking over time
 - Win rate and average return calculations
 - Risk-adjusted metrics (Sharpe, Sortino, etc.)
 - Active vs. closed position separation
+- SQLite database with proper indexing
 
 ## Technical Limitations
 
