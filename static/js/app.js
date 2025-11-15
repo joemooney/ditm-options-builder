@@ -619,6 +619,33 @@ async function loadPerformance(update = false) {
 
 // Display performance data
 function displayPerformance(data) {
+    // Display last Schwab fetch timestamp
+    const timestampSpan = document.getElementById('last-fetch-timestamp');
+    if (data.last_schwab_fetch) {
+        const fetchDate = new Date(data.last_schwab_fetch);
+        const now = new Date();
+        const diffMs = now - fetchDate;
+        const diffMins = Math.floor(diffMs / 60000);
+        const diffHours = Math.floor(diffMs / 3600000);
+        const diffDays = Math.floor(diffMs / 86400000);
+
+        let timeAgo;
+        if (diffMins < 1) {
+            timeAgo = 'just now';
+        } else if (diffMins < 60) {
+            timeAgo = `${diffMins} minute${diffMins > 1 ? 's' : ''} ago`;
+        } else if (diffHours < 24) {
+            timeAgo = `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
+        } else {
+            timeAgo = `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
+        }
+
+        const formattedDate = fetchDate.toLocaleString();
+        timestampSpan.innerHTML = `Last data from Schwab: <strong>${timeAgo}</strong> (${formattedDate})`;
+    } else {
+        timestampSpan.innerHTML = 'No data fetched from Schwab yet';
+    }
+
     // Risk metrics
     if (data.risk_metrics) {
         const metricsDiv = document.getElementById('risk-metrics-grid');

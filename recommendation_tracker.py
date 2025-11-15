@@ -28,6 +28,7 @@ class RecommendationTracker:
             "metadata": {
                 "created": datetime.now().isoformat(),
                 "last_updated": datetime.now().isoformat(),
+                "last_schwab_fetch": None,  # Timestamp of last successful Schwab API call
                 "version": "1.0"
             },
             "scans": {},
@@ -39,6 +40,17 @@ class RecommendationTracker:
         self.recommendations["metadata"]["last_updated"] = datetime.now().isoformat()
         with open(self.db_path, 'w') as f:
             json.dump(self.recommendations, f, indent=2, default=str)
+
+    def record_successful_schwab_fetch(self):
+        """Record timestamp of successful Schwab API data fetch."""
+        if "last_schwab_fetch" not in self.recommendations["metadata"]:
+            self.recommendations["metadata"]["last_schwab_fetch"] = None
+        self.recommendations["metadata"]["last_schwab_fetch"] = datetime.now().isoformat()
+        self._save_database()
+
+    def get_last_schwab_fetch(self) -> Optional[str]:
+        """Get timestamp of last successful Schwab API fetch."""
+        return self.recommendations["metadata"].get("last_schwab_fetch")
 
     def get_tickers_with_recent_recommendations(self, hours: int = 24) -> Dict[str, Dict]:
         """
@@ -318,11 +330,20 @@ class RecommendationTracker:
 
         print(f"\nUpdating {len(open_recs)} open recommendations...")
 
+        success_count = 0
         for i, rec in enumerate(open_recs, 1):
             print(f"  [{i}/{len(open_recs)}] {rec['ticker']} {rec['strike']} {rec['expiration']}")
-            self.update_recommendation_value(client, rec["id"])
+            try:
+                self.update_recommendation_value(client, rec["id"])
+                success_count += 1
+            except Exception as e:
+                print(f"    Error updating: {e}")
 
-        print(f"✓ Updated {len(open_recs)} recommendations\n")
+        print(f"✓ Updated {success_count}/{len(open_recs)} recommendations\n")
+
+        # Record successful Schwab fetch if at least one update succeeded
+        if success_count > 0:
+            self.record_successful_schwab_fetch()
 
     def get_performance_summary(self) -> pd.DataFrame:
         """

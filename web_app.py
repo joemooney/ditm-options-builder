@@ -154,6 +154,9 @@ def api_scan():
             print(f"Warning: Could not auto-update prices after scan: {e}")
             # Continue anyway - not a critical failure
 
+        # Record successful scan as a Schwab fetch
+        tracker.record_successful_schwab_fetch()
+
         # Calculate summary stats
         summary = {
             "total_invested": float(portfolio_df["Contract Cost"].sum()),
@@ -377,11 +380,15 @@ def api_performance():
             "avg_days_held": sum(p.get('Days_Held') or 0 for p in positions) / len(positions) if len(positions) > 0 else 0
         }
 
+        # Get last Schwab fetch timestamp
+        last_schwab_fetch = tracker.get_last_schwab_fetch()
+
         return jsonify({
             "success": True,
             "summary": summary,
             "risk_metrics": risk_metrics,
-            "positions": positions
+            "positions": positions,
+            "last_schwab_fetch": last_schwab_fetch
         })
 
     except Exception as e:
