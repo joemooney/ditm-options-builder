@@ -229,7 +229,7 @@ function updateActiveAndRecommendedPositions(positions) {
             html += `<td><strong>${pos.Ticker}</strong></td>`;
             html += `<td>${pos.Strike}</td>`;
             html += `<td>${pos.Expiration}</td>`;
-            html += `<td>${pos.DTE || 0}</td>`;
+            html += `<td>${Math.floor(pos.DTE || 0)}</td>`;
             html += `<td>${pos.Quantity || 0}</td>`;
             html += `<td>${formatCurrency(pos.Contract_Cost || 0)}</td>`;
             html += `<td class="${extrinsicClass}">${formatCurrency((pos.Extrinsic_Value || 0) * 100)}</td>`;
@@ -623,7 +623,7 @@ function displayScanResults(data) {
             html += `<td><strong>${pos.Ticker}</strong></td>`;
             html += `<td>$${pos.Strike}</td>`;
             html += `<td>${pos.Expiration}</td>`;
-            html += `<td>${pos.DTE}</td>`;
+            html += `<td>${Math.floor(pos.DTE)}</td>`;
             html += `<td>${pos.Delta.toFixed(3)}</td>`;
             html += `<td>${formatCurrency(pos['Contract Cost'])}</td>`;
             html += `<td class="negative">${formatCurrency(pos['Extrinsic Value'])}</td>`;
