@@ -1092,6 +1092,8 @@ if __name__ == '__main__':
                 port,
                 description="DITM Options Portfolio Builder - Web Interface",
                 start_command=".venv/bin/python web_app.py",
+                stop_command="pkill -f 'python web_app.py'",
+                restart_command="",  # Use automatic stop + start
                 working_dir="/home/joe/ai/ditm"
             )
             print(f"✓ Registered '{app_name}' on port {port} in global registry")
@@ -1104,6 +1106,8 @@ if __name__ == '__main__':
                 port,
                 description="DITM Options Portfolio Builder - Web Interface",
                 start_command=".venv/bin/python web_app.py",
+                stop_command="pkill -f 'python web_app.py'",
+                restart_command="",  # Use automatic stop + start
                 working_dir="/home/joe/ai/ditm"
             )
             print(f"✓ Registered '{app_name}' on port {port} (auto-assigned)")
