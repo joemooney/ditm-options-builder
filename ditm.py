@@ -451,6 +451,21 @@ def find_ditm_calls(client, ticker: str, max_retries: int = 3) -> pd.DataFrame:
         rows = []
         call_exp_map = options_data.get("callExpDateMap", {})
 
+        # Debug mode - track filtering stats
+        debug_scan = os.getenv('DEBUG_SCAN', 'false').lower() == 'true'
+        total_options = 0
+        filtered_stats = {
+            'dte_min': 0,
+            'dte_max': 0,
+            'oi_low': 0,
+            'spread_high': 0,
+            'intrinsic_low': 0,
+            'delta_out_of_range': 0,
+            'iv_high': 0,
+            'immediate_loss_high': 0,
+            'passed': 0
+        }
+
         for exp_date_str, strikes in call_exp_map.items():
             # Parse expiration date (format: "2025-01-17:45" where 45 is DTE)
             exp_date = datetime.strptime(exp_date_str.split(":")[0], "%Y-%m-%d")
@@ -458,6 +473,8 @@ def find_ditm_calls(client, ticker: str, max_retries: int = 3) -> pd.DataFrame:
             dte = int(T * 365)
 
             if dte < MIN_DTE:
+                if debug_scan:
+                    filtered_stats['dte_min'] += 1
                 continue
 
             for strike_str, contracts in strikes.items():
@@ -465,6 +482,9 @@ def find_ditm_calls(client, ticker: str, max_retries: int = 3) -> pd.DataFrame:
 
                 # Each strike can have multiple contracts (different expiries)
                 for contract in contracts:
+                    if debug_scan:
+                        total_options += 1
+
                     bid = contract.get("bid", 0)
                     ask = contract.get("ask", 0)
 
@@ -477,10 +497,14 @@ def find_ditm_calls(client, ticker: str, max_retries: int = 3) -> pd.DataFrame:
 
                     # ---- liquidity filters ----
                     if oi < MIN_OI:
+                        if debug_scan:
+                            filtered_stats['oi_low'] += 1
                         continue
 
                     spread_pct = (ask - bid) / mid
                     if spread_pct > MAX_SPREAD_PCT:
+                        if debug_scan:
+                            filtered_stats['spread_high'] += 1
                         continue
 
                     # ---- intrinsic value ----
@@ -490,6 +514,8 @@ def find_ditm_calls(client, ticker: str, max_retries: int = 3) -> pd.DataFrame:
 
                     intrinsic_pct = intrinsic / mid
                     if intrinsic_pct < MIN_INTRINSIC_PCT:
+                        if debug_scan:
+                            filtered_stats['intrinsic_low'] += 1
                         continue
 
                     # ---- delta (use BS if IV missing) ----
@@ -502,10 +528,14 @@ def find_ditm_calls(client, ticker: str, max_retries: int = 3) -> pd.DataFrame:
                         delta = bs_call_delta(S, K, T, RISK_FREE_RATE, sigma)
 
                     if not (MIN_DELTA <= delta <= MAX_DELTA):
+                        if debug_scan:
+                            filtered_stats['delta_out_of_range'] += 1
                         continue
 
                     # ---- IV filter ----
                     if sigma > MAX_IV:
+                        if debug_scan:
+                            filtered_stats['iv_high'] += 1
                         continue
 
                     # ---- cost vs. stock ----
@@ -525,7 +555,12 @@ def find_ditm_calls(client, ticker: str, max_retries: int = 3) -> pd.DataFrame:
                     # Total immediate loss = extrinsic + spread
                     immediate_loss_pct = extrinsic_pct + spread_pct
                     if immediate_loss_pct > max_loss_cap:
+                        if debug_scan:
+                            filtered_stats['immediate_loss_high'] += 1
                         continue  # Skip this option, too expensive for its DTE
+
+                    if debug_scan:
+                        filtered_stats['passed'] += 1
 
                     rows.append({
                         "Expiration": exp_date_str.split(":")[0],
@@ -547,6 +582,29 @@ def find_ditm_calls(client, ticker: str, max_retries: int = 3) -> pd.DataFrame:
                     })
 
         df = pd.DataFrame(rows)
+
+        # Debug output - show filter statistics
+        if debug_scan and total_options > 0:
+            if df.empty:
+                print(f"  Evaluated {total_options} ITM options for {ticker} - NONE passed filters:")
+                print(f"    - DTE < {MIN_DTE}: {filtered_stats['dte_min']}")
+                print(f"    - Intrinsic < {MIN_INTRINSIC_PCT*100}%: {filtered_stats['intrinsic_low']}")
+                print(f"    - Spread > {MAX_SPREAD_PCT*100}%: {filtered_stats['spread_high']}")
+                print(f"    - OI < {MIN_OI}: {filtered_stats['oi_low']}")
+                print(f"    - Delta not in {MIN_DELTA}-{MAX_DELTA}: {filtered_stats['delta_out_of_range']}")
+                print(f"    - IV > {MAX_IV*100}%: {filtered_stats['iv_high']}")
+                print(f"    - Immediate loss too high: {filtered_stats['immediate_loss_high']}")
+            else:
+                print(f"  Evaluated {total_options} ITM options for {ticker}:")
+                print(f"    - Passed all filters: {filtered_stats['passed']}")
+                print(f"    - Rejected by DTE < {MIN_DTE}: {filtered_stats['dte_min']}")
+                print(f"    - Rejected by Intrinsic < {MIN_INTRINSIC_PCT*100}%: {filtered_stats['intrinsic_low']}")
+                print(f"    - Rejected by Spread > {MAX_SPREAD_PCT*100}%: {filtered_stats['spread_high']}")
+                print(f"    - Rejected by OI < {MIN_OI}: {filtered_stats['oi_low']}")
+                print(f"    - Rejected by Delta not in {MIN_DELTA}-{MAX_DELTA}: {filtered_stats['delta_out_of_range']}")
+                print(f"    - Rejected by IV > {MAX_IV*100}%: {filtered_stats['iv_high']}")
+                print(f"    - Rejected by Immediate loss too high: {filtered_stats['immediate_loss_high']}")
+
         if df.empty:
             return df
 
