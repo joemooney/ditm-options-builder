@@ -292,6 +292,96 @@ def get_schwab_client():
         print("- See SCHWAB_SETUP.md for detailed setup instructions")
         raise
 
+
+def get_option_quote(client, ticker: str, strike: float, expiration: str, option_type: str = 'CALL'):
+    """
+    Get current quote data for a specific option contract.
+
+    Args:
+        client: Schwab API client
+        ticker: Stock ticker symbol
+        strike: Strike price
+        expiration: Expiration date (YYYY-MM-DD format)
+        option_type: 'CALL' or 'PUT' (default: 'CALL')
+
+    Returns:
+        Dictionary with option data or None if not found
+    """
+    try:
+        import schwab
+        from datetime import datetime
+
+        # Get option chain for this ticker
+        contract_type = schwab.client.Client.Options.ContractType.CALL if option_type == 'CALL' else schwab.client.Client.Options.ContractType.PUT
+
+        options_resp = client.get_option_chain(
+            ticker,
+            contract_type=contract_type,
+            include_underlying_quote=True
+        )
+
+        if options_resp.status_code != 200:
+            print(f"    Failed to get options chain: HTTP {options_resp.status_code}")
+            return None
+
+        options_data = options_resp.json()
+
+        if options_data.get("status") != "SUCCESS":
+            print(f"    Options query failed: {options_data.get('status')}")
+            return None
+
+        # Get stock price from underlying quote
+        stock_price = options_data.get("underlyingPrice", 0)
+        if not stock_price and "underlying" in options_data:
+            stock_price = options_data["underlying"].get("last", 0)
+
+        # Parse expiration date to match format in option chain
+        exp_date = datetime.strptime(expiration, "%Y-%m-%d")
+
+        # Search through option chain for matching strike and expiration
+        exp_map = options_data.get("callExpDateMap" if option_type == 'CALL' else "putExpDateMap", {})
+
+        for exp_date_str, strikes in exp_map.items():
+            # Parse expiration date (format: "2025-01-17:45" where 45 is DTE)
+            chain_exp_date = datetime.strptime(exp_date_str.split(":")[0], "%Y-%m-%d")
+
+            # Check if expiration matches
+            if chain_exp_date.date() != exp_date.date():
+                continue
+
+            # Look for matching strike
+            strike_str = str(float(strike))
+            if strike_str in strikes:
+                contracts = strikes[strike_str]
+                if contracts:
+                    contract = contracts[0]  # Take first contract
+
+                    bid = contract.get("bid", 0)
+                    ask = contract.get("ask", 0)
+                    mid = (bid + ask) / 2.0 if bid > 0 and ask > 0 else 0
+                    delta = contract.get("delta", 0)
+
+                    return {
+                        'ticker': ticker,
+                        'strike': strike,
+                        'expiration': expiration,
+                        'bid': bid,
+                        'ask': ask,
+                        'mid': mid,
+                        'delta': delta,
+                        'stock_price': stock_price,
+                        'iv': contract.get("volatility", 0),
+                        'oi': contract.get("openInterest", 0)
+                    }
+
+        print(f"    Option not found: {ticker} ${strike} {expiration}")
+        return None
+
+    except Exception as e:
+        print(f"    Error fetching option quote: {e}")
+        return None
+
+
 # -------------------------------------------------
 # SINGLE STOCK FUNCTION (Schwab API version)
 # -------------------------------------------------
