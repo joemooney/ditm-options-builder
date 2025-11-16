@@ -241,6 +241,45 @@ class RecommendationTrackerDB:
         """, (datetime.now().isoformat(), reason, ticker, strike, expiration))
         self.conn.commit()
 
+    def update_all_open_recommendations(self, client):
+        """Update all open recommendations with current market data."""
+        open_recs_df = self.get_open_recommendations()
+
+        if open_recs_df.empty:
+            print("No open recommendations to update.")
+            return
+
+        print(f"\nUpdating {len(open_recs_df)} open recommendations...")
+
+        success_count = 0
+        for i, (idx, rec) in enumerate(open_recs_df.iterrows(), 1):
+            print(f"  [{i}/{len(open_recs_df)}] {rec['ticker']} {rec['strike']} {rec['expiration']}")
+            try:
+                # Get current option data from Schwab
+                from ditm import get_option_quote
+                option_data = get_option_quote(client, rec['ticker'], rec['strike'],
+                                              rec['expiration'], 'CALL')
+
+                if option_data:
+                    self.update_recommendation_value(
+                        rec_id=rec['id'],
+                        client=client,
+                        current_bid=option_data.get('bid'),
+                        current_ask=option_data.get('ask'),
+                        current_mid=option_data.get('mid'),
+                        stock_current=option_data.get('stock_price'),
+                        delta_current=option_data.get('delta')
+                    )
+                    success_count += 1
+            except Exception as e:
+                print(f"    Error updating: {e}")
+
+        print(f"✓ Updated {success_count}/{len(open_recs_df)} recommendations\n")
+
+        # Record successful Schwab fetch if at least one update succeeded
+        if success_count > 0:
+            self.record_successful_schwab_fetch()
+
     # ========================================================================
     # CANDIDATE MANAGEMENT (ALL QUALIFYING OPTIONS)
     # ========================================================================
