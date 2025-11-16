@@ -90,8 +90,23 @@ ditm/
 - Fully integrated with global Port Manager
 - Registered on port 5010
 - Dashboard launcher enabled with start command: `.venv/bin/python web_app.py`
+- Stop command: `pkill -f 'python web_app.py'`
+- Restart command: automatic (stop + start)
 - Working directory: `/home/joe/ai/ditm`
+- Log level integration: Uses LOG_LEVEL environment variable (default: INFO)
 - Access via Port Manager dashboard at http://localhost:5050
+
+### Logging Support (Latest)
+- Python standard logging module with configurable levels
+- Environment variable: `LOG_LEVEL` (DEBUG, INFO, WARNING, ERROR, CRITICAL)
+- Default level: INFO
+- Structured format with timestamps, module names, and levels
+- Comprehensive logging in key operations:
+  * API scans - ticker lists, skipped items, progress, results
+  * Performance updates - data refresh operations
+  * Preset changes - filter preset switching
+- Integrated with Port Manager for centralized log level control
+- Supports debugging via detailed log files
 
 ### Web Interface Enhancement
 - Professional dashboard for options analysis

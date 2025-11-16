@@ -2,6 +2,140 @@
 
 ## Session Log
 
+### Session 4: Comprehensive Logging Support (2025-11-15)
+
+#### Request
+User requested comprehensive logging support for backend server actions with different log levels, integrated with Port Manager's log level control system.
+
+**Requirements:**
+1. Add stdout logging for backend server actions (data refresh, scans, etc.)
+2. Support different log levels (DEBUG, INFO, WARNING, ERROR, CRITICAL)
+3. Follow Port Manager log level integration guide
+4. Use LOG_LEVEL environment variable for control
+
+#### Implementation
+
+**Added Logging Configuration (web_app.py lines 1-43):**
+```python
+import logging
+
+# Setup logging with configurable level from environment
+log_level = os.getenv('LOG_LEVEL', 'INFO').upper()
+logging.basicConfig(
+    level=getattr(logging, log_level, logging.INFO),
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    datefmt='%Y-%m-%d %H:%M:%S'
+)
+logger = logging.getLogger(__name__)
+
+# Log startup configuration
+logger.info(f"Starting DITM Options Portfolio Builder")
+logger.info(f"Log level: {log_level}")
+logger.debug(f"Debug logging enabled")
+```
+
+**Added Logging to Key Endpoints:**
+
+1. **Scan Endpoint (`/api/scan`):**
+   - Logs tickers being scanned
+   - Logs skipped tickers with recent recommendations
+   - Logs scan progress and results
+   - Example: `"API: Scan requested for 3 tickers: AAPL, MSFT, GOOGL"`
+
+2. **Performance Endpoint (`/api/performance`):**
+   - Logs when data refresh is requested
+   - Logs Schwab API refresh operations
+   - Logs data retrieval from database
+   - Example: `"Refreshing all open recommendations from Schwab API"`
+
+3. **Preset Change Endpoint (`/api/preset/set/<name>`):**
+   - Logs preset changes with old and new values
+   - Logs preset validation
+   - Example: `"Filter preset changed from 'moderate' to 'aggressive'"`
+
+**Updated Port Manager Registration:**
+```python
+port_manager.register_port(
+    app_name,
+    port,
+    description="DITM Options Portfolio Builder - Web Interface",
+    start_command=".venv/bin/python web_app.py",
+    stop_command="pkill -f 'python web_app.py'",
+    restart_command="",
+    working_dir="/home/joe/ai/ditm",
+    log_level_method="env",           # NEW
+    log_level_var="LOG_LEVEL",        # NEW
+    default_log_level="INFO"          # NEW
+)
+```
+
+#### Testing Performed
+
+1. **INFO Level (Default):**
+   ```bash
+   .venv/bin/python web_app.py
+   ```
+   Output:
+   ```
+   2025-11-15 19:17:55 - __main__ - INFO - Starting DITM Options Portfolio Builder
+   2025-11-15 19:17:55 - __main__ - INFO - Log level: INFO
+   ```
+
+2. **DEBUG Level:**
+   ```bash
+   LOG_LEVEL=DEBUG .venv/bin/python web_app.py
+   ```
+   Output:
+   ```
+   2025-11-15 19:18:05 - __main__ - INFO - Starting DITM Options Portfolio Builder
+   2025-11-15 19:18:05 - __main__ - INFO - Log level: DEBUG
+   2025-11-15 19:18:05 - __main__ - DEBUG - Debug logging enabled
+   ```
+
+#### Files Modified
+- `web_app.py`: +46 lines (logging configuration and statements)
+
+#### Git Operations
+```bash
+git add web_app.py
+git commit -m "Add comprehensive logging support with Port Manager integration"
+```
+
+**Commit:** 09b9ebd
+
+#### Technical Details
+
+**Log Format:**
+- Timestamp: `YYYY-MM-DD HH:MM:SS`
+- Module name: `__main__`, `werkzeug`, etc.
+- Level: `DEBUG`, `INFO`, `WARNING`, `ERROR`, `CRITICAL`
+- Message: Descriptive text
+
+**Log Levels Supported:**
+- `DEBUG`: Detailed debugging information
+- `INFO`: General informational messages (default)
+- `WARNING`: Warning messages
+- `ERROR`: Error messages
+- `CRITICAL`: Critical errors
+
+**Port Manager Integration:**
+- Method: `env` (environment variable)
+- Variable: `LOG_LEVEL`
+- Default: `INFO`
+- Port Manager can now control log level via environment variable
+
+#### Benefits
+1. **Debugging Support:** Easy to enable detailed logging when needed
+2. **Production Ready:** Clean output at INFO level for normal operation
+3. **Centralized Control:** Port Manager can manage log level across all apps
+4. **Structured Logging:** Consistent format with timestamps and levels
+5. **Performance Tracking:** Can see detailed scan and refresh operations
+
+#### Documentation Updates
+- `CLAUDE.md`: Added "Logging Support" section under "Recent Major Updates"
+
+---
+
 ### Session 1: Port Manager Integration (2025-11-15)
 
 #### Request
