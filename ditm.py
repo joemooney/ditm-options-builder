@@ -795,7 +795,10 @@ def build_ditm_portfolio(client, tickers: list,
         print(f"Capital Efficiency: {(total_cost_port / total_equiv) * 100:.1f}% of stock cost")
         print(f"{'=' * 70}\n")
 
-    return df.sort_values("Score")  # Sort by conservatism
+    # Sort by Score if DataFrame is not empty
+    if not df.empty and "Score" in df.columns:
+        return df.sort_values("Score")  # Sort by conservatism
+    return df
 
 # -------------------------------------------------
 # EXAMPLE USAGE
