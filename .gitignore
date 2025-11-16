@@ -42,9 +42,16 @@ schwab_tokens.json
 .DS_Store
 Thumbs.db
 
-# Project specific
+# Project specific - User Data & Runtime Files
 ditm_portfolio_*.csv
 test_simple.py
 ditm_yfinance_backup.py
 xx.py
 market_data_cache/
+web_config.json
+recommendations_history.json
+recommendations_history.json.backup
+*.db
+*.db-journal
+*.sqlite
+*.sqlite3

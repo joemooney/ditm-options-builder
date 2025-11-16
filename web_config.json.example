@@ -2,22 +2,17 @@
   "tickers": [
     "AAPL",
     "MSFT",
-    "GOOGL",
-    "NVDA",
-    "PLTR",
-    "TSM",
-    "COST",
-    "AMZN",
-    "NFLX"
+    "GOOGL"
   ],
   "filters": {
-    "MIN_DELTA": 0.80,
+    "MIN_DELTA": 0.8,
     "MAX_DELTA": 0.95,
     "MIN_INTRINSIC_PCT": 0.85,
     "MIN_DTE": 90,
-    "MAX_IV": 0.30,
+    "MAX_IV": 0.3,
     "MAX_SPREAD_PCT": 0.02,
     "MIN_OI": 500,
     "MAX_IMMEDIATE_LOSS_PCT": 0.15
-  }
+  },
+  "current_preset": "moderate"
 }
