@@ -569,6 +569,16 @@ function displayScanResults(data) {
         html += `<div class="info-box mb-3"><i class="fas fa-info-circle"></i> ${data.info}</div>`;
     }
 
+    // Display cache warning if data is from market close
+    if (data.summary && data.summary.cache_info) {
+        const cacheInfo = data.summary.cache_info;
+        html += `<div class="warning-box mb-3">`;
+        html += `<i class="fas fa-clock"></i> <strong>Using Cached Data:</strong> ${cacheInfo.message}`;
+        html += `<br><small>Prices shown are from market close and will change when market reopens. `;
+        html += `Use "Refresh Prices" to update with current data when market is open.</small>`;
+        html += `</div>`;
+    }
+
     // Display no-results message if applicable
     if (data.no_results) {
         html += '<div class="card" style="margin-top: 20px;"><div class="card-body">';
