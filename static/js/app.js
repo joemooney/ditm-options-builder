@@ -317,7 +317,7 @@ function updateActiveAndRecommendedPositions(positions) {
             html += `</td>`;
             html += `<td onclick="showPositionDetail('${pos.Ticker}', '${pos.Strike}', '${pos.Expiration}')" style="cursor: pointer;">${pos.Strike}</td>`;
             html += `<td onclick="showPositionDetail('${pos.Ticker}', '${pos.Strike}', '${pos.Expiration}')" style="cursor: pointer;">${pos.Expiration}</td>`;
-            html += `<td onclick="showPositionDetail('${pos.Ticker}', '${pos.Strike}', '${pos.Expiration}')" style="cursor: pointer;">${pos.DTE || 0}</td>`;
+            html += `<td onclick="showPositionDetail('${pos.Ticker}', '${pos.Strike}', '${pos.Expiration}')" style="cursor: pointer;">${Math.floor(pos.DTE || 0)}</td>`;
             html += `<td onclick="showPositionDetail('${pos.Ticker}', '${pos.Strike}', '${pos.Expiration}')" style="cursor: pointer;">${formatCurrency(pos.Contract_Cost || 0)}</td>`;
             html += `<td onclick="showPositionDetail('${pos.Ticker}', '${pos.Strike}', '${pos.Expiration}')" style="cursor: pointer;" class="${extrinsicClass}">${formatCurrency(pos.Extrinsic_Value || 0)}</td>`;
             html += `<td onclick="showPositionDetail('${pos.Ticker}', '${pos.Strike}', '${pos.Expiration}')" style="cursor: pointer;" class="${extrinsicClass}">${formatPercent(pos.Extrinsic_Pct || 0)}</td>`;
