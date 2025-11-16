@@ -1134,8 +1134,9 @@ if __name__ == '__main__':
                        help='Force restart by killing any existing instances')
     args = parser.parse_args()
 
-    # Handle restart flag
-    if args.restart:
+    # Handle restart flag - but only on initial startup, not Flask reloader restarts
+    # Check if we're running under Flask's reloader
+    if args.restart and not os.environ.get('WERKZEUG_RUN_MAIN'):
         print("Stopping any existing instances...")
         try:
             # Find and kill any existing web_app.py processes (except this one)
