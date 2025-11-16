@@ -240,6 +240,7 @@ def api_scan():
         return jsonify(response)
 
     except Exception as e:
+        logger.error(f"API: Scan failed with error: {e}", exc_info=True)
         return jsonify({"success": False, "error": str(e)}), 500
 
 
