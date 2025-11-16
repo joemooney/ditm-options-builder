@@ -168,6 +168,60 @@ class FilterMatcher:
 
         return comparison
 
+    def get_mismatch_reason(self, option_data: Dict, preset_name: str) -> str:
+        """
+        Get a user-friendly explanation of why an option doesn't match a preset.
+
+        Args:
+            option_data: Dict with option metrics
+            preset_name: Name of the preset to check
+
+        Returns:
+            String explaining why the option doesn't match, or empty string if it matches
+        """
+        # If it matches, return empty string
+        if self.check_preset_match(option_data, preset_name):
+            return ""
+
+        # Get detailed comparison
+        comparison = self.compare_option_to_preset(option_data, preset_name)
+
+        # Build list of failed criteria with explanations
+        failures = []
+
+        for criterion, details in comparison['criteria'].items():
+            if not details['pass']:
+                value = details['value']
+                required = details['required']
+
+                # Format criterion name for display
+                criterion_display = {
+                    'delta': 'Delta',
+                    'intrinsic_pct': 'Intrinsic %',
+                    'extrinsic_pct': 'Extrinsic %',
+                    'dte': 'Days to Expiration',
+                    'iv': 'Implied Volatility',
+                    'spread_pct': 'Bid-Ask Spread %',
+                    'open_interest': 'Open Interest'
+                }.get(criterion, criterion)
+
+                # Format value based on criterion type
+                if criterion in ['intrinsic_pct', 'extrinsic_pct', 'spread_pct', 'iv']:
+                    value_str = f"{value*100:.2f}%"
+                elif criterion == 'delta':
+                    value_str = f"{value:.3f}"
+                elif criterion in ['dte', 'open_interest']:
+                    value_str = f"{int(value)}"
+                else:
+                    value_str = f"{value:.4f}"
+
+                # Build explanation
+                explanation = f"{criterion_display}: {value_str} (required: {required})"
+                failures.append(explanation)
+
+        # Join all failures with semicolons
+        return "; ".join(failures)
+
 
 # Convenience function for quick matching
 def check_preset_matches(option_data: Dict, presets_path: str = "./filter_presets.json") -> List[str]:

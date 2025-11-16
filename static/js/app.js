@@ -92,6 +92,8 @@ function showPage(pageName) {
             loadSettings();
         } else if (pageName === 'scan') {
             loadScanPage();
+        } else if (pageName === 'candidates') {
+            loadCandidatesPage();
         }
     }
 }
@@ -1627,6 +1629,131 @@ function closePositionDetail() {
     document.getElementById('position-detail-modal').style.display = 'none';
 }
 
+// ==================== Candidates Page ====================
+
+async function loadCandidatesPage() {
+    // Load presets into the dropdown
+    await loadCandidatesPresets();
+    // Don't auto-load candidates - wait for user to click refresh
+}
+
+async function loadCandidatesPresets() {
+    try {
+        const response = await fetch('/api/presets');
+        const data = await response.json();
+
+        if (data.success) {
+            const selector = document.getElementById('candidates-preset-selector');
+            selector.innerHTML = '<option value="">All Candidates (No Filter)</option>';
+
+            for (const [name, preset] of Object.entries(data.presets)) {
+                const option = document.createElement('option');
+                option.value = name;
+                option.textContent = `${name.charAt(0).toUpperCase() + name.slice(1)} - ${preset.description}`;
+                selector.appendChild(option);
+            }
+        }
+    } catch (error) {
+        console.error('Error loading presets:', error);
+        showToast('Failed to load presets', 'error');
+    }
+}
+
+async function loadCandidates() {
+    const preset = document.getElementById('candidates-preset-selector').value;
+    const container = document.getElementById('candidates-table-container');
+    const countDisplay = document.getElementById('candidates-count');
+
+    showLoading('Loading candidates...');
+
+    try {
+        const url = preset ? `/api/candidates?preset=${preset}` : '/api/candidates';
+        const response = await fetch(url);
+        const data = await response.json();
+
+        hideLoading();
+
+        if (!data.success) {
+            showToast(data.error || 'Failed to load candidates', 'error');
+            container.innerHTML = '<p class="text-muted">Error loading candidates.</p>';
+            return;
+        }
+
+        const candidates = data.candidates || [];
+        const filterText = preset ? ` (filtered by ${preset})` : '';
+        countDisplay.textContent = `${candidates.length} candidate(s)${filterText}`;
+
+        if (candidates.length === 0) {
+            container.innerHTML = '<p class="text-muted">No candidates found in database.</p>';
+            return;
+        }
+
+        // Build table
+        let html = '<div class="table-responsive"><table class="table">';
+        html += '<thead><tr>';
+        html += '<th>Ticker</th>';
+        html += '<th>Strike</th>';
+        html += '<th>Expiration</th>';
+        html += '<th>DTE</th>';
+        html += '<th>Delta</th>';
+        html += '<th>IV</th>';
+        html += '<th>Intrinsic %</th>';
+        html += '<th>Extrinsic %</th>';
+        html += '<th>Spread %</th>';
+        html += '<th>OI</th>';
+
+        if (preset) {
+            html += '<th>Match</th>';
+        }
+
+        html += '</tr></thead><tbody>';
+
+        candidates.forEach(candidate => {
+            html += '<tr>';
+            html += `<td><strong>${candidate.ticker}</strong></td>`;
+            html += `<td>$${candidate.strike.toFixed(2)}</td>`;
+            html += `<td>${candidate.expiration}</td>`;
+            html += `<td>${Math.floor(candidate.dte)}</td>`;
+            html += `<td>${(candidate.delta || 0).toFixed(3)}</td>`;
+            html += `<td>${((candidate.iv || 0) * 100).toFixed(1)}%</td>`;
+            html += `<td>${((candidate.intrinsic_pct || 0) * 100).toFixed(1)}%</td>`;
+            html += `<td>${((candidate.extrinsic_pct || 0) * 100).toFixed(1)}%</td>`;
+            html += `<td>${((candidate.spread_pct || 0) * 100).toFixed(2)}%</td>`;
+            html += `<td>${candidate.oi || 0}</td>`;
+
+            if (preset) {
+                if (candidate.matches_filter) {
+                    html += '<td><i class="fas fa-check-circle" style="color: var(--success); font-size: 1.2rem;"></i></td>';
+                } else {
+                    const reason = candidate.mismatch_reason || 'Does not match criteria';
+                    html += `<td style="cursor: pointer;" onclick='showMismatchReason(${JSON.stringify(reason)})'>`;
+                    html += '<i class="fas fa-times-circle" style="color: var(--danger); font-size: 1.2rem;"></i>';
+                    html += '</td>';
+                }
+            }
+
+            html += '</tr>';
+        });
+
+        html += '</tbody></table></div>';
+        container.innerHTML = html;
+
+        showToast(`Loaded ${candidates.length} candidates`, 'success');
+
+    } catch (error) {
+        hideLoading();
+        console.error('Error loading candidates:', error);
+        showToast('Failed to load candidates', 'error');
+        container.innerHTML = '<p class="text-muted">Error loading candidates.</p>';
+    }
+}
+
+function showMismatchReason(reason) {
+    // Show a modal or alert with the mismatch reason
+    const message = `This option doesn't match the selected preset:\n\n${reason}`;
+    alert(message);
+}
+
 // Export functions for inline use
 window.showPage = showPage;
 window.removeTicker = removeTicker;
@@ -1638,3 +1765,5 @@ window.removeTickerFromList = removeTickerFromList;
 window.showPositionDetail = showPositionDetail;
 window.closePositionDetail = closePositionDetail;
 window.toggleTheme = toggleTheme;
+window.loadCandidates = loadCandidates;
+window.showMismatchReason = showMismatchReason;

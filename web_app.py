@@ -1098,6 +1098,110 @@ def api_preset_performance():
         return jsonify({"success": False, "error": str(e)}), 500
 
 
+@app.route('/api/candidates', methods=['GET'])
+def api_all_candidates():
+    """Get all candidates with optional filtering."""
+    try:
+        from filter_matcher import FilterMatcher
+
+        # Get query parameters
+        preset_filter = request.args.get('preset')  # Optional: filter by preset
+        limit = request.args.get('limit', type=int, default=100)
+
+        # Get all candidates from database
+        conn = tracker.conn
+        query = """
+            SELECT c.*, s.scan_date, s.preset_name as scan_preset
+            FROM candidates c
+            JOIN scans s ON c.scan_id = s.scan_id
+            ORDER BY s.scan_date DESC, c.ticker, c.strike, c.expiration
+            LIMIT ?
+        """
+
+        import pandas as pd
+        candidates_df = pd.read_sql_query(query, conn, params=(limit,))
+
+        if candidates_df.empty:
+            return jsonify({
+                "success": True,
+                "count": 0,
+                "candidates": [],
+                "message": "No candidates found. Run a scan to populate data."
+            })
+
+        # If preset filter specified, check each candidate against it
+        if preset_filter:
+            matcher = FilterMatcher()
+            candidates_list = []
+
+            for _, row in candidates_df.iterrows():
+                option_data = {
+                    'delta': row['delta'],
+                    'intrinsic_pct': row['intrinsic_pct'],
+                    'extrinsic_pct': row['extrinsic_pct'],
+                    'dte': row['dte'],
+                    'iv': row['iv'],
+                    'spread_pct': row['spread_pct'],
+                    'oi': row['oi']
+                }
+
+                matches = matcher.check_preset_match(option_data, preset_filter)
+                reason = None if matches else matcher.get_mismatch_reason(option_data, preset_filter)
+
+                candidate = row.to_dict()
+                candidate['matches_filter'] = matches
+                candidate['mismatch_reason'] = reason
+                candidates_list.append(candidate)
+        else:
+            candidates_list = candidates_df.to_dict('records')
+
+        return jsonify({
+            "success": True,
+            "count": len(candidates_list),
+            "candidates": candidates_list,
+            "preset_filter": preset_filter
+        })
+
+    except Exception as e:
+        logger.error(f"API: Failed to get candidates: {e}", exc_info=True)
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route('/api/candidates/check', methods=['POST'])
+def api_check_candidate():
+    """Check why a candidate doesn't match a preset."""
+    try:
+        from filter_matcher import FilterMatcher
+
+        data = request.json
+        preset_name = data.get('preset_name')
+        option_data = data.get('option_data')
+
+        if not preset_name or not option_data:
+            return jsonify({
+                "success": False,
+                "error": "Missing preset_name or option_data"
+            }), 400
+
+        matcher = FilterMatcher()
+        matches = matcher.check_preset_match(option_data, preset_name)
+
+        result = {
+            "success": True,
+            "matches": matches,
+            "preset_name": preset_name
+        }
+
+        if not matches:
+            result['reason'] = matcher.get_mismatch_reason(option_data, preset_name)
+
+        return jsonify(result)
+
+    except Exception as e:
+        logger.error(f"API: Failed to check candidate: {e}", exc_info=True)
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
 @app.route('/api/health')
 def api_health():
     """Health check endpoint."""
