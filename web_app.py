@@ -216,6 +216,19 @@ def api_scan():
         tracker.record_successful_schwab_fetch()
 
         # Calculate summary stats
+        # Check if data was from cache (market closed)
+        cache_info = None
+        if 'cache_timestamp' in portfolio_df.columns and portfolio_df['cache_timestamp'].notna().any():
+            cache_timestamp = portfolio_df['cache_timestamp'].iloc[0]
+            if cache_timestamp:
+                cache_time = datetime.fromisoformat(cache_timestamp)
+                cache_age_minutes = int((datetime.now() - cache_time).total_seconds() / 60)
+                cache_info = {
+                    "timestamp": cache_timestamp,
+                    "age_minutes": cache_age_minutes,
+                    "message": f"Data from market close (cached {cache_age_minutes} minutes ago)"
+                }
+
         summary = {
             "total_invested": float(portfolio_df["Contract Cost"].sum()),
             "total_equiv_shares": float(portfolio_df["Equiv Shares"].sum()),
@@ -223,7 +236,8 @@ def api_scan():
             "num_positions": len(portfolio_df),
             "scan_date": datetime.now().isoformat(),
             "tickers_scanned": len(tickers_to_scan),
-            "tickers_skipped": len(skipped_tickers)
+            "tickers_skipped": len(skipped_tickers),
+            "cache_info": cache_info  # Add cache information
         }
 
         response = {

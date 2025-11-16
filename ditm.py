@@ -78,7 +78,7 @@ def get_cache_path(ticker: str) -> Path:
 def get_cached_data(ticker: str) -> Optional[dict]:
     """
     Retrieve cached market data for a ticker if available and fresh.
-    Returns None if cache is invalid or market is open.
+    Returns dict with 'data' and 'timestamp' keys, or None if cache is invalid or market is open.
     """
     if is_market_open():
         return None
@@ -97,8 +97,9 @@ def get_cached_data(ticker: str) -> Optional[dict]:
 
         # Cache is valid if it's from the same day
         if cache_time.date() == now.date():
-            print(f"  ✓ Using cached data for {ticker} (market closed)")
-            return cache_data['data']
+            cache_age_minutes = int((now - cache_time).total_seconds() / 60)
+            print(f"  ✓ Using cached data for {ticker} (cached {cache_age_minutes} minutes ago)")
+            return cache_data  # Return the whole cache object with timestamp
 
     except (json.JSONDecodeError, KeyError, ValueError) as e:
         print(f"  ⚠ Cache read error for {ticker}: {e}")
@@ -392,9 +393,11 @@ def find_ditm_calls(client, ticker: str, max_retries: int = 3) -> pd.DataFrame:
     """
     # Try to get cached data first
     cached = get_cached_data(ticker)
+    cache_timestamp = None
     if cached:
-        quote_data = cached['quote']
-        options_data = cached['options']
+        quote_data = cached['data']['quote']
+        options_data = cached['data']['options']
+        cache_timestamp = cached['timestamp']
         S = quote_data[ticker]["quote"]["lastPrice"]
     else:
         # Fetch fresh data from API
@@ -540,6 +543,7 @@ def find_ditm_calls(client, ticker: str, max_retries: int = 3) -> pd.DataFrame:
                         "Cost/Share": cost_per_share,
                         "OI": oi,
                         "Spread%": spread_pct,
+                        "cache_timestamp": cache_timestamp,  # Add cache timestamp
                     })
 
         df = pd.DataFrame(rows)
