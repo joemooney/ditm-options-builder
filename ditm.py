@@ -495,28 +495,15 @@ def find_ditm_calls(client, ticker: str, max_retries: int = 3) -> pd.DataFrame:
                     iv = contract.get("volatility", 0.30)  # Implied volatility
                     oi = contract.get("openInterest", 0)
 
-                    # ---- liquidity filters ----
-                    if oi < MIN_OI:
-                        if debug_scan:
-                            filtered_stats['oi_low'] += 1
-                        continue
-
+                    # ---- Calculate basic option properties ----
                     spread_pct = (ask - bid) / mid
-                    if spread_pct > MAX_SPREAD_PCT:
-                        if debug_scan:
-                            filtered_stats['spread_high'] += 1
-                        continue
 
                     # ---- intrinsic value ----
                     intrinsic = max(S - K, 0)
                     if intrinsic == 0:
-                        continue
+                        continue  # Skip ATM/OTM options - only save ITM options
 
                     intrinsic_pct = intrinsic / mid
-                    if intrinsic_pct < MIN_INTRINSIC_PCT:
-                        if debug_scan:
-                            filtered_stats['intrinsic_low'] += 1
-                        continue
 
                     # ---- delta (use BS if IV missing) ----
                     sigma = iv / 100.0 if iv > 1 else iv  # Normalize IV
@@ -527,17 +514,6 @@ def find_ditm_calls(client, ticker: str, max_retries: int = 3) -> pd.DataFrame:
                     if delta is None or np.isnan(delta):
                         delta = bs_call_delta(S, K, T, RISK_FREE_RATE, sigma)
 
-                    if not (MIN_DELTA <= delta <= MAX_DELTA):
-                        if debug_scan:
-                            filtered_stats['delta_out_of_range'] += 1
-                        continue
-
-                    # ---- IV filter ----
-                    if sigma > MAX_IV:
-                        if debug_scan:
-                            filtered_stats['iv_high'] += 1
-                        continue
-
                     # ---- cost vs. stock ----
                     shares_equiv = delta * 100
                     cost_per_share = mid / shares_equiv if shares_equiv > 0 else 0
@@ -546,20 +522,27 @@ def find_ditm_calls(client, ticker: str, max_retries: int = 3) -> pd.DataFrame:
                     extrinsic = mid - intrinsic  # Time value + volatility premium
                     extrinsic_pct = extrinsic / mid if mid > 0 else 0
 
-                    # ---- immediate loss filter (extrinsic + spread based on DTE) ----
-                    # Calculate DTE-adjusted max immediate loss: 5% base + (DTE/365)*5%
-                    # This allows higher immediate loss for longer-dated options
-                    max_loss_for_dte = 0.05 + (dte / 365.0) * 0.05  # Formula from User Guide
-                    max_loss_cap = min(max_loss_for_dte, MAX_IMMEDIATE_LOSS_PCT)  # Cap at MAX setting
-
-                    # Total immediate loss = extrinsic + spread
-                    immediate_loss_pct = extrinsic_pct + spread_pct
-                    if immediate_loss_pct > max_loss_cap:
-                        if debug_scan:
-                            filtered_stats['immediate_loss_high'] += 1
-                        continue  # Skip this option, too expensive for its DTE
-
+                    # Track for debug output (filters would be applied here in old code)
                     if debug_scan:
+                        # Count what WOULD have been rejected by old filters
+                        if oi < MIN_OI:
+                            filtered_stats['oi_low'] += 1
+                        if spread_pct > MAX_SPREAD_PCT:
+                            filtered_stats['spread_high'] += 1
+                        if intrinsic_pct < MIN_INTRINSIC_PCT:
+                            filtered_stats['intrinsic_low'] += 1
+                        if not (MIN_DELTA <= delta <= MAX_DELTA):
+                            filtered_stats['delta_out_of_range'] += 1
+                        if sigma > MAX_IV:
+                            filtered_stats['iv_high'] += 1
+
+                        # Calculate immediate loss for debug stats
+                        max_loss_for_dte = 0.05 + (dte / 365.0) * 0.05
+                        max_loss_cap = min(max_loss_for_dte, MAX_IMMEDIATE_LOSS_PCT)
+                        immediate_loss_pct = extrinsic_pct + spread_pct
+                        if immediate_loss_pct > max_loss_cap:
+                            filtered_stats['immediate_loss_high'] += 1
+
                         filtered_stats['passed'] += 1
 
                     rows.append({
@@ -586,24 +569,17 @@ def find_ditm_calls(client, ticker: str, max_retries: int = 3) -> pd.DataFrame:
         # Debug output - show filter statistics
         if debug_scan and total_options > 0:
             if df.empty:
-                print(f"  Evaluated {total_options} ITM options for {ticker} - NONE passed filters:")
-                print(f"    - DTE < {MIN_DTE}: {filtered_stats['dte_min']}")
-                print(f"    - Intrinsic < {MIN_INTRINSIC_PCT*100}%: {filtered_stats['intrinsic_low']}")
-                print(f"    - Spread > {MAX_SPREAD_PCT*100}%: {filtered_stats['spread_high']}")
-                print(f"    - OI < {MIN_OI}: {filtered_stats['oi_low']}")
-                print(f"    - Delta not in {MIN_DELTA}-{MAX_DELTA}: {filtered_stats['delta_out_of_range']}")
-                print(f"    - IV > {MAX_IV*100}%: {filtered_stats['iv_high']}")
-                print(f"    - Immediate loss too high: {filtered_stats['immediate_loss_high']}")
+                print(f"  Evaluated {total_options} ITM options for {ticker} - NONE found (all ATM/OTM):")
+                print(f"    - Filtered by DTE < {MIN_DTE}: {filtered_stats['dte_min']}")
             else:
-                print(f"  Evaluated {total_options} ITM options for {ticker}:")
-                print(f"    - Passed all filters: {filtered_stats['passed']}")
-                print(f"    - Rejected by DTE < {MIN_DTE}: {filtered_stats['dte_min']}")
-                print(f"    - Rejected by Intrinsic < {MIN_INTRINSIC_PCT*100}%: {filtered_stats['intrinsic_low']}")
-                print(f"    - Rejected by Spread > {MAX_SPREAD_PCT*100}%: {filtered_stats['spread_high']}")
-                print(f"    - Rejected by OI < {MIN_OI}: {filtered_stats['oi_low']}")
-                print(f"    - Rejected by Delta not in {MIN_DELTA}-{MAX_DELTA}: {filtered_stats['delta_out_of_range']}")
-                print(f"    - Rejected by IV > {MAX_IV*100}%: {filtered_stats['iv_high']}")
-                print(f"    - Rejected by Immediate loss too high: {filtered_stats['immediate_loss_high']}")
+                print(f"  Saved {len(df)} ITM options for {ticker} (from {total_options} evaluated)")
+                print(f"  Filter statistics (how many would fail each preset filter):")
+                print(f"    - Would fail OI < {MIN_OI}: {filtered_stats['oi_low']}")
+                print(f"    - Would fail Spread > {MAX_SPREAD_PCT*100}%: {filtered_stats['spread_high']}")
+                print(f"    - Would fail Intrinsic < {MIN_INTRINSIC_PCT*100}%: {filtered_stats['intrinsic_low']}")
+                print(f"    - Would fail Delta not in {MIN_DELTA}-{MAX_DELTA}: {filtered_stats['delta_out_of_range']}")
+                print(f"    - Would fail IV > {MAX_IV*100}%: {filtered_stats['iv_high']}")
+                print(f"    - Would fail Immediate loss too high: {filtered_stats['immediate_loss_high']}")
 
         if df.empty:
             return df
@@ -721,7 +697,7 @@ def build_ditm_portfolio(client, tickers: list,
 
         candidates = find_ditm_calls(client, ticker)
         if candidates.empty:
-            print(f"  No qualifying DITM calls for {ticker}.")
+            print(f"  No ITM options found for {ticker}.")
             continue
 
         # Get current stock price for comparison
@@ -730,7 +706,7 @@ def build_ditm_portfolio(client, tickers: list,
 
         # Save ALL candidates if using DB tracker with add_candidate method
         if save_recommendations and scan_id and matcher and hasattr(tracker, 'add_candidate'):
-            print(f"  Found {len(candidates)} qualifying options for {ticker}")
+            print(f"  Saving {len(candidates)} ITM options for {ticker} to database")
             for idx, candidate in candidates.iterrows():
                 # Calculate values for this candidate
                 intrinsic = max(S - candidate["Strike"], 0)
