@@ -5,6 +5,7 @@ Professional web application for options analysis and portfolio management.
 """
 import os
 import json
+import logging
 from datetime import datetime
 from pathlib import Path
 from flask import Flask, render_template, request, jsonify, send_from_directory
@@ -25,6 +26,20 @@ sys.path.insert(0, '/home/joe/ai/port_manager')
 from port_manager import PortManager
 
 load_dotenv()
+
+# Setup logging with configurable level from environment
+log_level = os.getenv('LOG_LEVEL', 'INFO').upper()
+logging.basicConfig(
+    level=getattr(logging, log_level, logging.INFO),
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    datefmt='%Y-%m-%d %H:%M:%S'
+)
+logger = logging.getLogger(__name__)
+
+# Log startup configuration
+logger.info(f"Starting DITM Options Portfolio Builder")
+logger.info(f"Log level: {log_level}")
+logger.debug(f"Debug logging enabled")
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.urandom(24)
@@ -114,16 +129,25 @@ def api_scan():
         data = request.json
         tickers = data.get('tickers', [])
 
+        logger.info(f"API: Scan requested for {len(tickers)} tickers: {', '.join(tickers)}")
+
         if not tickers:
+            logger.warning("API: Scan request rejected - no tickers provided")
             return jsonify({"success": False, "error": "No tickers provided"}), 400
 
         # Initialize Schwab client
+        logger.debug("Initializing Schwab API client")
         client = get_schwab_client()
+        logger.debug("Schwab client initialized successfully")
 
         # Check which tickers already have recent recommendations
         recent_tickers = tracker.get_tickers_with_recent_recommendations(hours=24)
         skipped_tickers = [t for t in tickers if t in recent_tickers]
         tickers_to_scan = [t for t in tickers if t not in recent_tickers]
+
+        if skipped_tickers:
+            logger.info(f"Skipping {len(skipped_tickers)} tickers with recent recommendations: {', '.join(skipped_tickers)}")
+        logger.info(f"Scanning {len(tickers_to_scan)} tickers for DITM options")
 
         # Run scan with tracking (1 contract per ticker)
         portfolio_df = build_ditm_portfolio(
@@ -132,6 +156,8 @@ def api_scan():
             tracker=tracker,
             save_recommendations=True
         )
+
+        logger.info(f"Scan completed - found {len(portfolio_df)} positions")
 
         if portfolio_df.empty:
             # Record successful scan even if no positions found
@@ -259,17 +285,25 @@ def api_performance():
     try:
         update = request.args.get('update', 'false').lower() == 'true'
 
+        logger.info(f"API: Performance data requested (update={update})")
+
         client = None
         if update:
+            logger.info("Refreshing all open recommendations from Schwab API")
             client = get_schwab_client()
             # Update all open recommendation prices from Schwab
             tracker.update_all_open_recommendations(client)
+            logger.info("Successfully refreshed recommendation prices")
 
         # Get performance summary (all recommendations)
+        logger.debug("Fetching performance summary from database")
         df = tracker.get_performance_summary()
+        logger.debug(f"Performance summary: {len(df)} recommendations")
 
         # Get active positions from account
+        logger.debug("Fetching active positions from Schwab account")
         active_df = get_account_positions(client if client else get_schwab_client())
+        logger.debug(f"Active positions: {len(active_df)} positions")
 
         # Add is_active flag by matching with account positions
         if not df.empty and not active_df.empty:
@@ -973,16 +1007,20 @@ def api_preset_details(preset_name):
 def api_set_preset(preset_name):
     """Set the current active preset."""
     try:
+        logger.info(f"API: Changing filter preset to '{preset_name}'")
         from filter_matcher import FilterMatcher
         matcher = FilterMatcher()
 
         # Validate preset exists
         preset = matcher.get_preset(preset_name)
+        logger.debug(f"Preset '{preset_name}' validated: {preset['name']}")
 
         # Update config
         config = load_config()
+        old_preset = config.get('current_preset', 'moderate')
         config['current_preset'] = preset_name
         save_config(config)
+        logger.info(f"Filter preset changed from '{old_preset}' to '{preset_name}'")
 
         return jsonify({
             "success": True,
@@ -1094,7 +1132,10 @@ if __name__ == '__main__':
                 start_command=".venv/bin/python web_app.py",
                 stop_command="pkill -f 'python web_app.py'",
                 restart_command="",  # Use automatic stop + start
-                working_dir="/home/joe/ai/ditm"
+                working_dir="/home/joe/ai/ditm",
+                log_level_method="env",
+                log_level_var="LOG_LEVEL",
+                default_log_level="INFO"
             )
             print(f"✓ Registered '{app_name}' on port {port} in global registry")
         except ValueError as e:
@@ -1108,7 +1149,10 @@ if __name__ == '__main__':
                 start_command=".venv/bin/python web_app.py",
                 stop_command="pkill -f 'python web_app.py'",
                 restart_command="",  # Use automatic stop + start
-                working_dir="/home/joe/ai/ditm"
+                working_dir="/home/joe/ai/ditm",
+                log_level_method="env",
+                log_level_var="LOG_LEVEL",
+                default_log_level="INFO"
             )
             print(f"✓ Registered '{app_name}' on port {port} (auto-assigned)")
 
