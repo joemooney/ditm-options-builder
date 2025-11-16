@@ -1109,6 +1109,55 @@ def static_files(filename):
 
 
 if __name__ == '__main__':
+    import argparse
+    import subprocess
+    import signal
+
+    # Parse command line arguments
+    parser = argparse.ArgumentParser(description='DITM Options Portfolio Builder Web Interface')
+    parser.add_argument('--restart', action='store_true',
+                       help='Force restart by killing any existing instances')
+    args = parser.parse_args()
+
+    # Handle restart flag
+    if args.restart:
+        print("Stopping any existing instances...")
+        try:
+            # Find and kill any existing web_app.py processes (except this one)
+            import psutil
+            current_pid = os.getpid()
+            killed_count = 0
+
+            for proc in psutil.process_iter(['pid', 'cmdline']):
+                try:
+                    cmdline = ' '.join(proc.info['cmdline'] or [])
+                    if 'web_app.py' in cmdline and proc.info['pid'] != current_pid:
+                        print(f"  Killing process {proc.info['pid']}: {cmdline}")
+                        proc.kill()
+                        killed_count += 1
+                except (psutil.NoSuchProcess, psutil.AccessDenied):
+                    pass
+
+            if killed_count > 0:
+                print(f"✓ Stopped {killed_count} existing instance(s)")
+                import time
+                time.sleep(1)  # Give processes time to clean up
+            else:
+                print("No existing instances found")
+        except ImportError:
+            # Fallback to pkill if psutil not available
+            print("Note: Install psutil for better process management (pip install psutil)")
+            result = subprocess.run(['pkill', '-f', 'python.*web_app.py'],
+                                  capture_output=True, text=True)
+            if result.returncode == 0:
+                print("✓ Stopped existing instances")
+                import time
+                time.sleep(2)  # Give more time since we can't be selective
+            else:
+                print("No existing instances found")
+        except Exception as e:
+            print(f"Warning: Could not kill existing processes: {e}")
+
     # Create necessary directories
     Path("templates").mkdir(exist_ok=True)
     Path("static/css").mkdir(parents=True, exist_ok=True)
@@ -1131,7 +1180,7 @@ if __name__ == '__main__':
                 description="DITM Options Portfolio Builder - Web Interface",
                 start_command=".venv/bin/python web_app.py",
                 stop_command="pkill -f 'python web_app.py'",
-                restart_command="",  # Use automatic stop + start
+                restart_command=".venv/bin/python web_app.py --restart",
                 working_dir="/home/joe/ai/ditm",
                 log_level_method="env",
                 log_level_var="LOG_LEVEL",
@@ -1148,7 +1197,7 @@ if __name__ == '__main__':
                 description="DITM Options Portfolio Builder - Web Interface",
                 start_command=".venv/bin/python web_app.py",
                 stop_command="pkill -f 'python web_app.py'",
-                restart_command="",  # Use automatic stop + start
+                restart_command=".venv/bin/python web_app.py --restart",
                 working_dir="/home/joe/ai/ditm",
                 log_level_method="env",
                 log_level_var="LOG_LEVEL",
