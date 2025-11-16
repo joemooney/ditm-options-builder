@@ -861,6 +861,23 @@ function updatePresetDisplay(presetKey, presets) {
         charsList.appendChild(li);
     }
     document.getElementById('preset-characteristics').style.display = 'block';
+
+    // Update filter parameter fields to match preset
+    if (preset.filters) {
+        updateFilterFields(preset.filters);
+    }
+}
+
+// Update filter parameter input fields
+function updateFilterFields(filters) {
+    document.getElementById('setting-min-delta').value = filters.MIN_DELTA ?? 0.80;
+    document.getElementById('setting-max-delta').value = filters.MAX_DELTA ?? 0.95;
+    document.getElementById('setting-min-intrinsic').value = filters.MIN_INTRINSIC_PCT ?? 0.85;
+    document.getElementById('setting-min-dte').value = filters.MIN_DTE ?? 90;
+    document.getElementById('setting-max-iv').value = filters.MAX_IV ?? 0.30;
+    document.getElementById('setting-max-spread').value = filters.MAX_SPREAD_PCT ?? 0.02;
+    document.getElementById('setting-min-oi').value = filters.MIN_OI ?? 500;
+    document.getElementById('setting-max-immediate-loss').value = filters.MAX_IMMEDIATE_LOSS_PCT ?? 0.15;
 }
 
 // Change preset
