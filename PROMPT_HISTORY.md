@@ -2,6 +2,234 @@
 
 ## Session Log
 
+### Session 5: Candidates Analysis Panel (2025-11-15)
+
+#### Request
+User requested: "Could we add a panel that shows all the options data we have retrieved and stored in sqlite. I would like to be able to have a dropdown with the different presets and be able to apply a preset to see rows that it filters out (maybe a green check and red cross). Ideally, I would like to be able to click on a row that does not match the filter and get an explanation of why it did not match the preset."
+
+**Requirements:**
+1. Show all scanned option candidates from SQLite database
+2. Dropdown to select preset for filtering analysis
+3. Visual indicators (green check/red X) for match status
+4. Click handler to show detailed explanation of why options don't match
+
+#### Implementation
+
+**Added Backend API Endpoints (web_app.py):**
+
+1. **GET /api/candidates** (lines 1101-1167):
+```python
+@app.route('/api/candidates', methods=['GET'])
+def api_all_candidates():
+    """Get all candidates with optional filtering."""
+    preset_filter = request.args.get('preset')
+    limit = request.args.get('limit', type=int, default=100)
+
+    # Query candidates from database with scan metadata
+    query = """
+        SELECT c.*, s.scan_date, s.preset_name as scan_preset
+        FROM candidates c
+        JOIN scans s ON c.scan_id = s.scan_id
+        ORDER BY s.scan_date DESC, c.ticker, c.strike, c.expiration
+        LIMIT ?
+    """
+
+    if preset_filter:
+        matcher = FilterMatcher()
+        # For each candidate, check match and get reason if doesn't match
+        matches = matcher.check_preset_match(option_data, preset_filter)
+        reason = None if matches else matcher.get_mismatch_reason(option_data, preset_filter)
+```
+
+2. **POST /api/candidates/check** (lines 1170-1202):
+```python
+@app.route('/api/candidates/check', methods=['POST'])
+def api_check_candidate():
+    """Check if a candidate matches a preset and why."""
+    data = request.json
+    preset_name = data.get('preset_name')
+    option_data = data.get('option_data')
+
+    matcher = FilterMatcher()
+    matches = matcher.check_preset_match(option_data, preset_name)
+    reason = matcher.get_mismatch_reason(option_data, preset_name) if not matches else None
+```
+
+**Added Filter Matching Logic (filter_matcher.py lines 171-223):**
+```python
+def get_mismatch_reason(self, option_data: Dict, preset_name: str) -> str:
+    """
+    Get a user-friendly explanation of why an option doesn't match a preset.
+    Returns empty string if it matches.
+    """
+    if self.check_preset_match(option_data, preset_name):
+        return ""
+
+    comparison = self.compare_option_to_preset(option_data, preset_name)
+    failures = []
+
+    for criterion, details in comparison['criteria'].items():
+        if not details['pass']:
+            # Format criterion name and value for display
+            criterion_display = {
+                'delta': 'Delta',
+                'intrinsic_pct': 'Intrinsic %',
+                'extrinsic_pct': 'Extrinsic %',
+                'dte': 'Days to Expiration',
+                'iv': 'Implied Volatility',
+                'spread_pct': 'Bid-Ask Spread %',
+                'open_interest': 'Open Interest'
+            }.get(criterion, criterion)
+
+            # Format explanation: "Delta: 0.650 (required: 0.7-0.95)"
+            explanation = f"{criterion_display}: {value_str} (required: {required})"
+            failures.append(explanation)
+
+    return "; ".join(failures)
+```
+
+**Added Navigation Link (templates/index.html lines 28-30):**
+```html
+<a href="#" class="nav-link" data-page="candidates">
+    <i class="fas fa-table"></i> Candidates
+</a>
+```
+
+**Added Candidates Page (templates/index.html lines 444-494):**
+```html
+<div id="page-candidates" class="page">
+    <div class="page-header">
+        <h1><i class="fas fa-table"></i> Candidate Options</h1>
+        <p>Analyze all scanned options and see how they match different filter presets</p>
+    </div>
+
+    <!-- Filter Controls -->
+    <div class="card">
+        <div class="card-body">
+            <label for="candidates-preset-selector">Test Against Preset</label>
+            <select id="candidates-preset-selector" class="form-control" onchange="loadCandidates()">
+                <option value="">All Candidates (No Filter)</option>
+            </select>
+            <button class="btn btn-primary" onclick="loadCandidates()">
+                <i class="fas fa-sync"></i> Refresh Candidates
+            </button>
+        </div>
+    </div>
+
+    <!-- Candidates Table -->
+    <div class="card">
+        <div id="candidates-table-container">
+            <p>Select a preset and click "Refresh Candidates" to load data.</p>
+        </div>
+    </div>
+</div>
+```
+
+**Added JavaScript Functions (static/js/app.js lines 1632-1769):**
+
+1. **loadCandidatesPage()** - Initializes page and loads preset dropdown
+2. **loadCandidatesPresets()** - Fetches presets and populates dropdown
+3. **loadCandidates()** - Fetches candidates from API and builds table
+4. **showMismatchReason()** - Displays alert with detailed failure explanation
+
+```javascript
+async function loadCandidates() {
+    const preset = document.getElementById('candidates-preset-selector').value;
+    const url = preset ? `/api/candidates?preset=${preset}` : '/api/candidates';
+
+    // Build table with all option metrics
+    candidates.forEach(candidate => {
+        // Display: Ticker, Strike, Exp, DTE, Delta, IV, Intrinsic%, Extrinsic%, Spread%, OI
+
+        if (preset) {
+            if (candidate.matches_filter) {
+                // Show green checkmark
+                html += '<i class="fas fa-check-circle" style="color: var(--success);"></i>';
+            } else {
+                // Show red X with click handler
+                html += `<td onclick='showMismatchReason(${JSON.stringify(reason)})'>`;
+                html += '<i class="fas fa-times-circle" style="color: var(--danger);"></i>';
+            }
+        }
+    });
+}
+
+function showMismatchReason(reason) {
+    alert(`This option doesn't match the selected preset:\n\n${reason}`);
+}
+```
+
+#### Testing
+
+**Test Cases:**
+1. Navigate to Candidates page - loads preset dropdown
+2. Click "Refresh Candidates" without filter - shows all candidates
+3. Select preset from dropdown - filters candidates and shows match status
+4. Click red X on non-matching candidate - displays detailed mismatch reason
+
+**Example Mismatch Reason:**
+```
+This option doesn't match the selected preset:
+
+Delta: 0.650 (required: 0.7-0.95); IV: 45.00% (required: <=30%)
+```
+
+#### Files Modified
+- `web_app.py`: +102 lines (2 new API endpoints)
+- `filter_matcher.py`: +53 lines (get_mismatch_reason method)
+- `templates/index.html`: +53 lines (navigation link + candidates page)
+- `static/js/app.js`: +138 lines (candidates page functions)
+
+#### Git Operations
+```bash
+git add filter_matcher.py static/js/app.js templates/index.html web_app.py
+git commit -m "Add Candidates Analysis panel with preset filtering"
+```
+
+**Commit:** 0f83408
+
+#### Technical Details
+
+**Database Query:**
+- Joins `candidates` and `scans` tables
+- Orders by scan date (most recent first)
+- Limits to 100 results by default
+- Returns all option metrics needed for filtering
+
+**Match Status Determination:**
+- Uses FilterMatcher.check_preset_match() to test each option
+- Calls get_mismatch_reason() for failed candidates
+- Returns structured data with matches_filter boolean and mismatch_reason string
+
+**UI Components:**
+- Preset dropdown populated from /api/presets
+- Responsive table with all option metrics
+- Font Awesome icons: fa-check-circle (green), fa-times-circle (red)
+- Click handlers on red X icons trigger mismatch explanation
+
+**Performance Considerations:**
+- Default limit of 100 candidates prevents slow queries
+- Filtering done in Python rather than SQL for flexibility
+- Table built client-side from JSON data
+
+#### Benefits
+1. **Educational:** Users can see exactly why options fail preset criteria
+2. **Debugging:** Helps users understand and tune filter parameters
+3. **Transparency:** All scanned data is visible, not just top picks
+4. **Analytical:** Can compare how different presets affect candidate selection
+
+#### User Workflow
+1. User navigates to "Candidates" page from navbar
+2. Selects a preset from dropdown (e.g., "Conservative")
+3. Clicks "Refresh Candidates" button
+4. Table displays all scanned options with green checks and red X marks
+5. User clicks red X on a failed option
+6. Alert shows: "Delta: 0.650 (required: 0.7-0.95); IV: 45.00% (required: <=30%)"
+7. User adjusts preset parameters in Settings if needed
+8. Returns to Candidates page to re-test
+
+---
+
 ### Session 4: Comprehensive Logging Support (2025-11-15)
 
 #### Request
